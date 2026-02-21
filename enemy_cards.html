@@ -1,0 +1,1568 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Designer Enhanced</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=IM+Fell+English:ital@0;1&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+@media print {
+  @page { size: landscape; margin: 0; }
+  body { background-color: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .editor-panel { display: none !important; }
+  .app-layout { display: block !important; height: auto !important; }
+  .datacard-container { display: block !important; padding: 0; background: white; height: auto; }
+  .main-card { transform: scale(1); margin: 0; break-inside: avoid; page-break-inside: avoid; float: left; }
+}
+
+:root {
+  --bg-dark: #0f1a1a;
+  --panel-bg: #252525;
+  --input-bg: #333;
+  --text-light: #e0e0e0;
+  --accent-blue: #4a90e2;
+  --accent-danger: #d9534f;
+  --card-width: 900px;
+  --card-height: 600px;
+  --token-size: 45px;
+  --health-size: 32px;
+}
+
+* { box-sizing: border-box; }
+body { font-family: 'Lato', sans-serif; background-color: var(--bg-dark); color: var(--text-light); margin: 0; height: 100vh; overflow: hidden; }
+
+.app-layout { display: flex; height: 100vh; }
+.editor-panel { width: 400px; background-color: var(--panel-bg); border-right: 1px solid #000; display: flex; flex-direction: column; height: 100%; flex-shrink: 0; overflow-y: auto; padding: 20px; }
+.datacard-container { flex-grow: 1; background-color: #555; display: flex; justify-content: center; align-items: center; overflow: auto; padding: 20px; }
+
+h2, h3 { margin-top: 0; border-bottom: 1px solid #555; padding-bottom: 10px; font-family: 'Cinzel', serif; }
+h3 { margin-top: 16px; font-size: 0.95rem; }
+label { display: block; margin-top: 10px; font-size: 0.85rem; color: #aaa; font-weight: bold; }
+input[type="text"], input[type="number"], input[type="range"], textarea, select {
+  width: 100%; padding: 8px; background-color: var(--input-bg); border: 1px solid #555; color: white; border-radius: 4px; margin-top: 5px;
+}
+.btn { width: 100%; padding: 10px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; margin-top: 10px; transition: background 0.2s; }
+.btn-teal { background-color: var(--accent-teal); }
+.btn-burgundy { background-color: var(--accent-danger); }
+.btn-export { background-color: #8e44ad; }
+.btn:hover { opacity: 0.9; }
+.row { display: flex; gap: 10px; }
+.col { flex: 1; }
+.hidden { display: none; }
+
+/* Behavior list in editor */
+.behavior-list { list-style: none; padding: 0; margin-top: 10px; }
+.behavior-item { background: #333; padding: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #444; font-size: 0.85rem; }
+
+/* Abilities list in editor */
+.ability-editor-item { background: #1a2828; border: 1px solid #444; border-radius: 4px; padding: 8px; margin-top: 8px; }
+.ability-editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.78rem; color: #888; }
+.ability-editor-header button { background: var(--accent-danger); border: none; color: white; border-radius: 3px; cursor: pointer; padding: 2px 7px; font-size: 0.78rem; }
+.ability-editor-item textarea { margin-top: 0; font-size: 0.82rem; min-height: 50px; }
+
+/* Image position controls */
+.img-ctrl-box { background: #1e1e1e; border: 1px solid #3a3a3a; border-radius: 5px; padding: 8px; margin-top: 6px; }
+.ic-row { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+.ic-row:last-child { margin-bottom: 0; }
+.ic-lbl { font-size: 0.7rem; color: #888; font-weight: bold; text-transform: uppercase; min-width: 38px; flex-shrink: 0; }
+.ic-val { font-size: 0.7rem; color: #4a90e2; min-width: 38px; text-align: right; flex-shrink: 0; }
+.ic-row input[type="range"] { flex: 1; margin: 0; padding: 0; height: 18px; background: transparent; border: none; border-radius: 0; width: auto; }
+.nudge { background: #3a3a3a; border: 1px solid #555; color: #ccc; border-radius: 3px; width: 22px; height: 22px; font-size: 0.85rem; line-height: 1; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0; }
+.nudge:hover { background: #555; color: white; }
+
+/* Details/summary accordions */
+details { margin-top: 8px; }
+details summary { cursor: pointer; font-size: 0.9rem; font-weight: bold; color: #ccc; padding: 6px 0; border-bottom: 1px solid #444; }
+details summary:hover { color: white; }
+details > div { padding-top: 8px; }
+
+/* Export modal */
+.export-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; justify-content: center; align-items: center; }
+.export-overlay.active { display: flex; }
+.export-modal { background: #1a2828; border: 1px solid #555; border-radius: 8px; padding: 24px; width: 300px; }
+.export-modal h3 { margin-top: 0; color: white; }
+.export-status { font-size: 0.85rem; color: #aaa; margin-top: 10px; min-height: 20px; text-align: center; }
+.export-close { margin-top: 8px; background: #444; }
+
+/* ─── CARD DESIGN ─── */
+.main-card {
+  width: var(--card-width);
+  height: var(--card-height);
+  background-color: #e3ded1;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  display: grid;
+  grid-template-columns: 35% 45% 20%;
+  color: #111;
+  overflow: hidden;
+}
+
+.col-art {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.character-img {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  max-height: none;
+  width: auto;
+  height: 85%;
+  filter: drop-shadow(5px 5px 10px rgba(0,0,0,0.6));
+  pointer-events: none;
+}
+
+.card-icon {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  z-index: 40;
+  filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
+}
+
+.col-info {
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: rgba(240, 240, 240, 0.9);
+  box-shadow: -5px 0 15px rgba(0,0,0,0.2), 5px 0 15px rgba(0,0,0,0.2);
+  z-index: 20;
+}
+
+.card-header {
+  text-align: center;
+  border-bottom: 2px solid #333;
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50px;
+}
+
+.unit-name {
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin: 0;
+  letter-spacing: 1px;
+  width: 100%;
+  line-height: 1;
+  white-space: normal;
+  overflow-wrap: break-word;
+  display: block;
+}
+
+.stats-row { display: flex; justify-content: space-around; align-items: center; margin-bottom: 20px; }
+.stat-pod { display: flex; flex-direction: column; align-items: center; position: relative; width: 60px; }
+.stat-label { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; margin-bottom: 2px; font-family: 'Lato', sans-serif; letter-spacing: 1px; }
+.stat-shape {
+  width: 50px; height: 50px;
+  display: flex; justify-content: center; align-items: center;
+  font-family: 'Cinzel', serif; font-size: 1.8rem; font-weight: bold; color: white;
+  background-size: contain; background-repeat: no-repeat; background-position: center;
+}
+.shape-hex    { background-color: #2c3e50; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
+.shape-shield { background-color: #274e13; clip-path: path('M25 0 L50 10 L50 35 C50 45 25 50 25 50 C25 50 0 45 0 35 L0 10 Z'); }
+.shape-circle { background-color: #8a1c1c; border-radius: 50%; }
+.shape-pill   { background-color: #444; border-radius: 15px; width: 40px !important; }
+
+.weapon-bar {
+  display: flex; border: 2px solid #333; background: #fff;
+  margin-bottom: 15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+}
+.weapon-icon-box {
+  background: #2c3e50; color: white; width: 50px;
+  display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
+}
+.weapon-stat { flex: 1; border-left: 1px solid #333; text-align: center; padding: 5px 0; }
+.w-label { font-size: 0.6rem; font-weight: 900; display: block; text-transform: uppercase; color: #666; }
+.w-val { font-size: 1.6rem; font-family: 'Cinzel', serif; font-weight: 700; line-height: 1; }
+
+.abilities-container { flex-grow: 1; font-family: 'IM Fell English', serif; font-size: 1.1rem; line-height: 1.2; padding: 0 5px; overflow: hidden; }
+.ability-block { margin-bottom: 10px; position: relative; }
+.ability-name { font-weight: bold; text-decoration: underline; font-family: 'Cinzel', serif; }
+
+.trigger-icon {
+  display: inline-block; vertical-align: middle; color: #111; font-size: 1.1em;
+  margin-right: 4px; margin-top: -3px; border: 1px solid #111; border-radius: 2px;
+  padding: 1px; line-height: 0;
+}
+
+.token-circle {
+  display: inline-block;
+  width: var(--token-size);
+  height: var(--token-size);
+  border: 2px dashed #333;
+  border-radius: 50%;
+  margin: 5px 8px;
+  vertical-align: middle;
+  opacity: 0.7;
+}
+
+.health-track {
+  margin-top: auto; padding-top: 15px;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;
+}
+.health-node {
+  width: var(--health-size);
+  height: var(--health-size);
+  border-radius: 50%;
+  background: #8a1c1c; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  display: flex; justify-content: center; align-items: center;
+  color: white; font-weight: bold; font-family: 'Cinzel', serif;
+  font-size: calc(var(--health-size) * 0.5);
+}
+.health-node.skull { background: #111; border-color: #8a1c1c; }
+
+.col-behavior {
+  padding: 20px 10px;
+  display: flex; flex-direction: column; align-items: center;
+  background: rgba(0,0,0,0.1);
+  position: relative;
+  gap: 10px;
+}
+
+/* Section background layers - use ::before for opacity without affecting children */
+.col-art::before, .col-info::before, .col-behavior::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--bg-image, none);
+  background-size: var(--bg-size, cover);
+  background-position: var(--bg-position, center);
+  opacity: var(--bg-opacity, 1);
+}
+
+.col-art > *, .col-info > *, .col-behavior > * {
+  position: relative;
+  z-index: 1;
+}
+
+.behavior-slot {
+  width: 90%; height: 70px; flex-shrink: 0;
+  background: linear-gradient(135deg, #e8e8e8 0%, #d8d8d8 100%);
+  border: 2px solid #aaa;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.6);
+  border-radius: 6px;
+  display: flex; flex-direction: row; justify-content: space-evenly; align-items: center;
+  position: relative; z-index: 2; padding: 6px;
+}
+.b-icon-wrap {
+  display: flex; justify-content: center; align-items: center;
+  flex: 1;
+}
+.b-token-circle {
+  width: 44px; height: 44px;
+  border: 2px dashed #888; border-radius: 50%;
+  background: rgba(180,180,180,0.35);
+  flex-shrink: 0;
+}
+
+.b-icon { font-size: 2.5rem; }
+.b-die-img { width: 56px; height: 56px; object-fit: contain; }
+.b-action { color: #111; border: 3px solid #111; padding: 2px; border-radius: 4px; font-size: 1.8rem; }
+.b-text { font-family: 'IM Fell English', serif; font-size: 0.8rem; font-weight: bold; line-height: 1.1; color: #111; }
+
+.arrow-down { color: white; font-size: 1.8rem; text-shadow: 0 0 3px black; margin: -5px 0; z-index: 1; }
+
+.loop-graphic {
+  position: absolute;
+  right: 15px; top: 55px;
+  width: 22px;
+  border-right: 4px solid white;
+  border-top: 4px solid white;
+  border-bottom: 4px solid white;
+  border-radius: 0 15px 15px 0;
+  box-shadow: 2px 0 3px rgba(0,0,0,0.5);
+  pointer-events: none; z-index: 3;
+  transition: height 0.3s ease, top 0.3s ease;
+}
+.loop-arrow-head {
+  position: absolute; top: -14px; left: -10px;
+  color: white; font-size: 1.5rem; text-shadow: 0 0 3px black;
+}
+
+/* Darkwater Theme Buttons */
+.btn-teal {
+  background-color: #2a8a8a;
+  border-color: #1a6d6d;
+  color: white;
+}
+.btn-teal:hover {
+  background-color: #1a6d6d;
+  border-color: #0f4d4d;
+}
+
+.btn-burgundy {
+  background-color: #8b3a3a;
+  border-color: #722828;
+  color: white;
+}
+.btn-burgundy:hover {
+  background-color: #722828;
+  border-color: #5a1f1f;
+}
+
+.btn {
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s;
+}
+
+/* Range Slider Styling - Teal Theme */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  outline: none;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #2a8a8a;
+  border: 2px solid #1a6d6d;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #1a6d6d;
+  border-color: #0f4d4d;
+  transform: scale(1.1);
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #2a8a8a;
+  border: 2px solid #1a6d6d;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  background: #1a6d6d;
+  border-color: #0f4d4d;
+  transform: scale(1.1);
+}
+
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+}
+
+/* IE/Edge */
+input[type="range"]::-ms-thumb {
+  width: 16px;
+  height: 16px;
+  background: #2a8a8a;
+  border: 2px solid #1a6d6d;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+input[type="range"]::-ms-track {
+  width: 100%;
+  height: 6px;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+input[type="range"]::-ms-fill-lower {
+  background: #333;
+  border-radius: 3px;
+}
+
+input[type="range"]::-ms-fill-upper {
+  background: #333;
+  border-radius: 3px;
+}
+</style>
+</head>
+<body>
+<div class="app-layout">
+
+<!-- ══════════════════════ EDITOR PANEL ══════════════════════ -->
+<aside class="editor-panel">
+  <h2>Card Designer for Darkwater Enemies</h2>
+  
+  <!-- Collapse/Expand All Control -->
+  <div style="margin: 10px 0; text-align: center;">
+    <button id="toggleAllSections" class="btn btn-teal" style="width: 100%; padding: 8px; font-size: 0.9rem;">
+      ▼ Collapse All Sections
+    </button>
+  </div>
+
+  <!-- ── IMAGERY ── -->
+  <details open>
+    <summary>🖼 Imagery</summary>
+    <div>
+      <h3>Card Background</h3>
+      <label>Upload Image</label>
+      <input type="file" id="bgUpload" accept="image/*">
+      <div class="img-ctrl-box" id="bgCtrl">
+        <div class="ic-row">
+          <span class="ic-lbl">X</span>
+          <button class="nudge" id="bgXm">−</button>
+          <input type="range" id="bgPX" min="0" max="100" value="50" step="1">
+          <button class="nudge" id="bgXp">+</button>
+          <span class="ic-val" id="bgPXv">50%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Y</span>
+          <button class="nudge" id="bgYm">−</button>
+          <input type="range" id="bgPY" min="0" max="100" value="50" step="1">
+          <button class="nudge" id="bgYp">+</button>
+          <span class="ic-val" id="bgPYv">50%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Scale</span>
+          <button class="nudge" id="bgSm">−</button>
+          <input type="range" id="bgSC" min="50" max="400" value="100" step="5">
+          <button class="nudge" id="bgSp">+</button>
+          <span class="ic-val" id="bgSCv">100%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Alpha</span>
+          <input type="range" id="bgAL" min="0" max="1" value="1" step="0.05">
+          <span class="ic-val" id="bgALv">1.0</span>
+        </div>
+      </div>
+      <button class="btn btn-burgundy" id="bgClear" style="margin-top:6px;">Clear Background</button>
+
+      <h3>Character Art</h3>
+      <label>Upload Image</label>
+      <input type="file" id="charUpload" accept="image/*">
+      <div class="img-ctrl-box">
+        <div class="ic-row">
+          <span class="ic-lbl">X</span>
+          <button class="nudge" id="chXm">−</button>
+          <input type="range" id="chPX" min="0" max="100" value="50" step="1">
+          <button class="nudge" id="chXp">+</button>
+          <span class="ic-val" id="chPXv">50%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Y</span>
+          <button class="nudge" id="chYm">−</button>
+          <input type="range" id="chPY" min="-300" max="300" value="0" step="5">
+          <button class="nudge" id="chYp">+</button>
+          <span class="ic-val" id="chPYv">0px</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Scale</span>
+          <button class="nudge" id="chSm">−</button>
+          <input type="range" id="chSC" min="10" max="300" value="100" step="5">
+          <button class="nudge" id="chSp">+</button>
+          <span class="ic-val" id="chSCv">100%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Alpha</span>
+          <input type="range" id="chAL" min="0" max="1" value="1" step="0.05">
+          <span class="ic-val" id="chALv">1.0</span>
+        </div>
+      </div>
+      <div class="row" style="margin-top:6px; gap:4px;">
+        <button class="btn btn-teal" id="artUp" style="padding:6px;">↑</button>
+        <button class="btn btn-teal" id="artDown" style="padding:6px;">↓</button>
+        <button class="btn btn-teal" id="artLeft" style="padding:6px;">←</button>
+        <button class="btn btn-teal" id="artRight" style="padding:6px;">→</button>
+        <button class="btn btn-teal" id="artZoomIn" style="padding:6px;">＋</button>
+        <button class="btn btn-teal" id="artZoomOut" style="padding:6px;">−</button>
+      </div>
+
+      <h3>Card Icon</h3>
+      <label>Upload Image</label>
+      <input type="file" id="iconUpload" accept="image/*">
+      <div class="img-ctrl-box">
+        <div class="ic-row">
+          <span class="ic-lbl">X</span>
+          <button class="nudge" id="icXm">−</button>
+          <input type="range" id="icPX" min="0" max="95" value="2" step="1">
+          <button class="nudge" id="icXp">+</button>
+          <span class="ic-val" id="icPXv">2%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Y</span>
+          <button class="nudge" id="icYm">−</button>
+          <input type="range" id="icPY" min="0" max="95" value="2" step="1">
+          <button class="nudge" id="icYp">+</button>
+          <span class="ic-val" id="icPYv">2%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Size</span>
+          <button class="nudge" id="icSm">−</button>
+          <input type="range" id="icSZ" min="20" max="150" value="50" step="2">
+          <button class="nudge" id="icSp">+</button>
+          <span class="ic-val" id="icSZv">50px</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Alpha</span>
+          <input type="range" id="icAL" min="0" max="1" value="1" step="0.05">
+          <span class="ic-val" id="icALv">1.0</span>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ── CORE STATS ── -->
+  <details open>
+    <summary>📊 Core Stats</summary>
+    <div>
+      <label>Unit Name</label>
+      <input type="text" id="unitName" value="Bad Enemy">
+      <label>Name Size (Max)</label>
+      <input type="range" id="nameSizeRange" min="1.5" max="3.5" step="0.1" value="2.2">
+      <div class="row">
+        <div class="col"><label>Move</label><input type="number" id="statMove" value="2"></div>
+        <div class="col"><label>Def</label><input type="number" id="statDef" value="0"></div>
+        <div class="col"><label>Health</label><input type="number" id="statHealth" value="1" min="-1" max="20"></div>
+        <div class="col"><label>Group</label><input type="number" id="statGroup" value="3"></div>
+      </div>
+      <label>Health Node Size</label>
+      <input type="range" id="healthSizeRange" min="20" max="50" value="32">
+    </div>
+  </details>
+
+  <!-- ── WEAPON PROFILE ── -->
+  <details open>
+    <summary>⚔ Weapon Profile</summary>
+    <div>
+      <div class="row">
+        <div class="col"><label>Range</label><input type="text" id="wRange" value="2"></div>
+        <div class="col"><label>Dice</label><input type="text" id="wDice" value="1"></div>
+        <div class="col"><label>Hit</label><input type="text" id="wHit" value="4+"></div>
+        <div class="col"><label>Crit</label><input type="text" id="wCrit" value="6+"></div>
+      </div>
+      <label>Weapon Icon</label>
+      <select id="wIcon">
+        <option value="fa-hammer">Melee (Hammer)</option>
+        <option value="fa-crosshairs">Ranged (Crosshair)</option>
+        <option value="fa-skull">Magic (Skull)</option>
+        <option value="fa-paw">Beast (Claw)</option>
+      </select>
+    </div>
+  </details>
+
+  <!-- ── ABILITIES ── -->
+  <details open>
+    <summary>✨ Abilities</summary>
+    <div>
+      <label>Text Size</label>
+      <input type="range" id="textSizeRange" min="0.7" max="1.5" step="0.05" value="1.1">
+      <div id="tokenSizeContainer" class="hidden">
+        <label style="color:var(--accent-teal);">[O] Token Size</label>
+        <input type="range" id="tokenSizeRange" min="30" max="80" value="45">
+      </div>
+      <p style="font-size:0.78rem;color:#888;margin:8px 0 4px;">Tags: [action] = trigger icon &nbsp;|&nbsp; [O] = circle token &nbsp;|&nbsp; [b]...[/b] = bold title</p>
+      <div id="abilitiesList"></div>
+      <button class="btn btn-teal" id="addAbilityBtn" style="margin-top:8px;">+ Add Ability</button>
+    </div>
+  </details>
+
+  <!-- ── BEHAVIOR LOOP ── -->
+  <details open>
+    <summary>🎲 Behavior Loop (Max 10 Including arrows)</summary>
+    <div>
+      <div class="row" style="margin-top:8px;">
+        <div class="col">
+          <select id="behaviorType">
+            <option value="black">Black Die</option>
+            <option value="red">Red Die</option>
+            <option value="action">Action</option>
+            <option value="arrow_down">Arrow Down ↓</option>
+            <option value="arrow_up">Arrow Up ↑</option>
+            <option value="text">Free Text</option>
+          </select>
+        </div>
+        <div class="col">
+          <button class="btn btn-teal" id="addBehaviorBtn" style="margin-top:5px;">Add</button>
+        </div>
+      </div>
+      <input type="text" id="behaviorTextInput" class="hidden" placeholder="Enter text (e.g. Advance)..." style="margin-top:5px; border-color:var(--accent-teal);">
+      <ul id="behaviorList" class="behavior-list"></ul>
+    </div>
+  </details>
+
+  <!-- ── VISUAL CUSTOMISATION ── -->
+  <details>
+    <summary>🎨 Visual Customisation</summary>
+    <div>
+      <h3>Section Widths</h3>
+      <label>Left (Art): <span id="leftWidthVal">35</span>%</label>
+      <input type="range" id="leftWidth" min="15" max="55" value="35">
+      <label>Center (Info): <span id="centerWidthVal">45</span>%</label>
+      <input type="range" id="centerWidth" min="25" max="65" value="45">
+      <label>Right (Behavior): <span id="rightWidthVal">20</span>%</label>
+      <input type="range" id="rightWidth" min="10" max="40" value="20">
+      <p style="font-size:0.7rem;color:#888;margin:4px 0 0;">Total should equal 100%</p>
+
+      <h3>Left Section (Art)</h3>
+      <label>Background Image</label>
+      <input type="file" id="leftBgUpload" accept="image/*">
+      <div class="img-ctrl-box">
+        <div class="ic-row">
+          <span class="ic-lbl">X</span>
+          <button class="nudge" id="lbXm">−</button>
+          <input type="range" id="lbPX" min="0" max="100" value="50" step="1">
+          <button class="nudge" id="lbXp">+</button>
+          <span class="ic-val" id="lbPXv">50%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Y</span>
+          <button class="nudge" id="lbYm">−</button>
+          <input type="range" id="lbPY" min="0" max="100" value="50" step="1">
+          <button class="nudge" id="lbYp">+</button>
+          <span class="ic-val" id="lbPYv">50%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Scale</span>
+          <button class="nudge" id="lbSm">−</button>
+          <input type="range" id="lbSC" min="50" max="400" value="100" step="5">
+          <button class="nudge" id="lbSp">+</button>
+          <span class="ic-val" id="lbSCv">100%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Alpha</span>
+          <input type="range" id="lbAL" min="0" max="1" value="1" step="0.05">
+          <span class="ic-val" id="lbALv">1.00</span>
+        </div>
+      </div>
+      <label>Background Color</label>
+      <input type="color" id="leftBgColor" value="#1a4d4d">
+      <button class="btn btn-burgundy" id="clearLeftBg" style="margin-top:6px;">Clear Left BG</button>
+
+      <h3>Center Section (Info)</h3>
+      <label>Background Image</label>
+      <input type="file" id="centerBgUpload" accept="image/*">
+      <div class="img-ctrl-box">
+        <div class="ic-row">
+          <span class="ic-lbl">X</span>
+          <button class="nudge" id="cbXm">−</button>
+          <input type="range" id="cbPX" min="0" max="100" value="50" step="1">
+          <button class="nudge" id="cbXp">+</button>
+          <span class="ic-val" id="cbPXv">50%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Y</span>
+          <button class="nudge" id="cbYm">−</button>
+          <input type="range" id="cbPY" min="0" max="100" value="50" step="1">
+          <button class="nudge" id="cbYp">+</button>
+          <span class="ic-val" id="cbPYv">50%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Scale</span>
+          <button class="nudge" id="cbSm">−</button>
+          <input type="range" id="cbSC" min="50" max="400" value="100" step="5">
+          <button class="nudge" id="cbSp">+</button>
+          <span class="ic-val" id="cbSCv">100%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Alpha</span>
+          <input type="range" id="cbAL" min="0" max="1" value="0.9" step="0.05">
+          <span class="ic-val" id="cbALv">0.90</span>
+        </div>
+      </div>
+      <label>Background Color</label>
+      <input type="color" id="centerBgColor" value="#f5f3ee">
+      <button class="btn btn-burgundy" id="clearCenterBg" style="margin-top:6px;">Clear Center BG</button>
+
+      <h3>Right Section (Behavior)</h3>
+      <label>Background Image</label>
+      <input type="file" id="rightBgUpload" accept="image/*">
+      <div class="img-ctrl-box">
+        <div class="ic-row">
+          <span class="ic-lbl">X</span>
+          <button class="nudge" id="rbXm">−</button>
+          <input type="range" id="rbPX" min="0" max="100" value="50" step="1">
+          <button class="nudge" id="rbXp">+</button>
+          <span class="ic-val" id="rbPXv">50%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Y</span>
+          <button class="nudge" id="rbYm">−</button>
+          <input type="range" id="rbPY" min="0" max="100" value="50" step="1">
+          <button class="nudge" id="rbYp">+</button>
+          <span class="ic-val" id="rbPYv">50%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Scale</span>
+          <button class="nudge" id="rbSm">−</button>
+          <input type="range" id="rbSC" min="50" max="400" value="100" step="5">
+          <button class="nudge" id="rbSp">+</button>
+          <span class="ic-val" id="rbSCv">100%</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-lbl">Alpha</span>
+          <input type="range" id="rbAL" min="0" max="1" value="1" step="0.05">
+          <span class="ic-val" id="rbALv">1.00</span>
+        </div>
+      </div>
+      <label>Background Color</label>
+      <input type="color" id="rightBgColor" value="#1a4d4d">
+      <button class="btn btn-burgundy" id="clearRightBg" style="margin-top:6px;">Clear Right BG</button>
+    </div>
+  </details>
+
+  <!-- ── EXPORT ── -->
+  <button class="btn btn-export" id="exportBtn" style="margin-top:16px;">💾 Export Card</button>
+</aside>
+
+<!-- ══════════════════════ CARD PREVIEW ══════════════════════ -->
+<main class="datacard-container">
+  <div class="main-card" id="cardElement">
+    <div id="bgOverlay" style="position:absolute;inset:0;background-size:cover;background-position:center;pointer-events:none;z-index:0;opacity:0;"></div>
+    <img id="iconDisplay" class="card-icon" src="" alt="" style="display:none;">
+    <div class="col-art" id="colArt">
+      <img src="" class="character-img" id="charImgDisplay" alt="">
+    </div>
+    <div class="col-info" id="colInfo">
+      <div class="card-header">
+        <h1 class="unit-name" id="displayUnitName">Bad Enemy</h1>
+      </div>
+      <div class="stats-row">
+        <div class="stat-pod">
+          <div class="stat-label">Move</div>
+          <div class="stat-shape shape-hex"><span id="displayMove">2</span></div>
+        </div>
+        <div class="stat-pod">
+          <div class="stat-label">Defence</div>
+          <div class="stat-shape shape-shield"><span id="displayDef">0</span></div>
+        </div>
+        <div class="stat-pod">
+          <div class="stat-label">Health</div>
+          <div class="stat-shape shape-circle"><span id="displayHealth">1</span></div>
+        </div>
+        <div class="stat-pod">
+          <div class="stat-label">Group</div>
+          <div class="stat-shape shape-pill"><span id="displayGroup">3</span></div>
+        </div>
+      </div>
+      <div class="weapon-bar">
+        <div class="weapon-icon-box"><img id="displayWIcon" style="width:36px;height:36px;object-fit:contain;filter:brightness(0) invert(1);"></div>
+        <div class="weapon-stat"><span class="w-label">Range</span><span class="w-val" id="displayWRange">2</span></div>
+        <div class="weapon-stat"><span class="w-label">Dice</span><span class="w-val" id="displayWDice">1</span></div>
+        <div class="weapon-stat"><span class="w-label">Hit</span><span class="w-val" id="displayWHit">4+</span></div>
+        <div class="weapon-stat"><span class="w-label">Crit</span><span class="w-val" id="displayWCrit">6+</span></div>
+      </div>
+      <div class="abilities-container" id="displayAbilities"></div>
+      <div class="health-track" id="displayHealthTrack"></div>
+    </div>
+    <div class="col-behavior" id="displayBehavior"></div>
+  </div>
+</main>
+</div>
+
+<!-- Export modal -->
+<div class="export-overlay" id="exportOverlay">
+  <div class="export-modal">
+    <h3>Export Card</h3>
+    <button class="btn btn-teal" id="dlPdf">📄 Download PDF</button>
+    <button class="btn btn-teal" id="dlJpg">🖼 Download JPG</button>
+    <div class="export-status" id="exportStatus"></div>
+    <button class="btn export-close" id="exportClose">Close</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// EMBEDDED DICE ASSETS
+// ═══════════════════════════════════════
+const DICE = {
+  black: 'data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDc5IDgwIiB3aWR0aD0iNzkiIGhlaWdodD0iODAiPgoJPGRlZnM+CgkJPGltYWdlICB3aWR0aD0iNTciIGhlaWdodD0iNjAiIGlkPSJpbWcxIiBocmVmPSJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQURrQUFBQThDQVlBQUFEYzFSSTJBQUFBQVhOU1IwSUIyY2tzZndBQUdKdEpSRUZVZUp4OW0zZHdWVlhYeHZjZkRFanZuVUJDNzBWQXBFZ3ZLa1dsU3gvc29CUkZLU0xTVWNwcm1lOURBUkVFaGlLaU1rb3h3QUJwWkVMcUpBVENVSk1KQ1dGSVkwQjAxUDN1M3pwWkp3ZDEzanV6NTV4NzdpbnIyYzlhejFwN24zM04rYmhvY3lFdHlTUW14SnE0MkNpVEVIL094SitQTVVtSmNlWmNUSVI4NXplK3A2VW1tdFNVQkpPU0hDL1hKQ2VkbCtNMHp1SDR4ZlFVYyszcUpaT2JrK24yMDh6QmIvZWJSUXZmdFdOR1AyOEhEZXh2ZXo3NWhIMnlSM2ZicTJjUE8yUndmenR4d2hpN2RzMEtjL0xFTVhQaittVno4OFlWazM0aFdaN0RQWGtHOW1qREp1ekVibXpqOTloemtTYmk3RW5acWoyMGxPUkVkNjlVWXlJalR2a25jNE9ZNkxQeUhZUGpZaVBkd3dDVTZHNGFKZWRnd0pYTDZRS0dCMkVNKzJ5dlhybG84dS9taW5HZmY3YkpUSmd3d1hidTNObTJiZHZXZHVyVXlmYnAwOGYyNk5IRDl1dlhUL1o3OSs1dHUzVHBJcjhOR2pUQXZ2bm1MSHY0OEE4bU0vT0dORUFCaUMwZGpGMlJwMCtZYzVGblRFcGlySURpbUFjbzNpY0tISkFBd0lUNE9HUE9uQTQzMFZGbjVBY3UwcHR5MGJtWXN3TDBZbnF5WEVRRDBPV01DN0tsWGJxWUtnemszYzZXVHRpd2ZxMFovdXhRMjc1ZGF6RWVJQUFDV0s5ZXZXVC9xYWVlc2s4ODhZVHQyN2V2SE8vZnY3ODdyNmZyRURxaXQ1MDNiNDQ5ZXZSbmszbnp1bmdEdHFsTjJCcDk5cFJKamk5bEdadnBCTUFxY0d4TFMwMTJ3TTk3VE1LSXVpUTNVdmNESkF4bVhFcnozVWZka1dQWHJsNDJSWVg1c3YzUHBnMW1zR09qVGV1V3RsUEg5cmFQTXhwUUFCa3dZSURzQTZobno1NjJXN2R1Y3B4akFHUi9vSFBsSVVNR3VkOTdDTmdCQS9yWkQ1Y3R0UmlablhWVEFOR3dUMElvemdQdGVWelVJNkVEWURvZmtMaXNNS2wrRG1DMlFhQnMxWDBCeHMwQVdsaHcxOXk2bFdWMjcvN0dQUFBNTU51aVJUUG5laDRUWHVzbGpNRWNUY0cyYnQzYXJseTUwdTdjdWRPMmI5OWVmZ1BvVTAvMUVXQkRodzRXd0Z6LytPT2Q3Zmp4WSsydWIzYVlXOW1aanRtclBxTnFvOXFOWFhnWTNvYTloRlhHcFhUeEJBR3BGeXFqOUFRbmN3TjFVWTd4R3cvTHU1MWp3bjg1WmlaTm11amlyWTF0MDZhVnVKdUNvL1h0NjdtbEFnVmt4NDRkSFZ0RGJINSt2dVV6Y3VSSWljbUJBd2NLTUs0WlBIaWdNTXErZ29YZDJiTmV0NGhMVnVZMXNRZDc4UzVsRU50VVc4RGphY2NsQi95aThWVktWVlRabzFlNGlRWThxcGQvTjA4Q2VlbjdpMjNuVGgxdHExWXR4QkFZYU8zY3RIMzd0c0pJa0VsaUVnWUJpZ2p0MmJOSEFQNzExMTkyeTVZdHdpYm45ZS9mMXdmSi9RQ0tHTEhmcng4eDNOMk9HUDZNM2JaMXN3Z2M5Z0FVUUdxN1pnTlZZbGk4ZFBHQzhYMGRZTEFHTUU1Z1MyOXdFVEY0T3pmTDdQajZLME1hYUJvV2FydDE3V0tmZE9tZ2gwc0hXN1o4NGR6dmF6dG16QXN1M2g0WDEyV3JnZ09JN3QyN1N3eW1wNmZiMzM3N1RZQWVQWHJVZHVqUVFkd1ZJSFNZZGhvQWNWM0FzK1ZZOSs1ZEpRWE5uVFBMNG1XM3NtOUk3RVZGbnZhQkJvVXpLUkcya3p3bWFmd1lCTXBKc0FrNGJqRHJqZGZFZUJVVmFZNnRGaTJhMndVTDNuWW0veW50NTU4UDIvY2QweGdHUzYxYXRaSXRyanAwNkZCNzdkbzFuOGtEQnc2SUFudmk0N0dJRnlpNFFZTUdDV2hsZDlpd29iYWZPNis3NjhEblJvMnczeDg2SUFRb0dacEhJYzBUU2doTU1DWTlKVkdVU3VPUnhna0UrVjNubnR1M2J6TVkwTFJwbU92SmJvNk5KOFVRYjl2SHNmbWtBRGgyN0pnWXJoL2k3dkRodzNiRmloWDJwWmRla25PSERSdG1jM0p5ZkpCZmZmV1ZYSXM3RTVlQVVvRmlINWRWZGdFNGRPZ1FZZmpwcDRlSys5TEpLMWN1ZDhTa1NCckRiZ1VKd3lpcnVHdENiTFF2TlB4SWo5ek92ZVV1dW1wSXpoMDZ0SFBDMGxwY1UyTU5JUWlxWi9QbXplMEhIM3pnQS96OTk5OWwrK2VmZi9ySDNubm5IV2ZjMDdhZ29NQS9qc0pTS01Da3g1b0hGTVk5b0FNc3lvMHIwOUV3SEl4Wno0VzcyVGRlZjlYQzJKMjhXNzRnZVlKWkVwTWFmd0NGOW52RmhTN2hSaGppcTNuenBwS3pQTlo2aWFqUWd3Qm1YL01nYktLYU4yL2U5RUVwcTNmdTNIR3hPc2FHaFlYWkdUTm0rTDhEOVBQUFB4Y3hJbTRWSlBkamYvRGd3VDRRZ0FKWWhRaXd5aXJuWU4rTEU4ZGJVa2wyMW5YQkFSNUFTbGxIaFVBcEI0dDM4bkxOMFNNL0dkSkJtQk1YQUxFUHFDQ1RIS1BCQU1rZE5vazkzQy9JSHA5NzkrN1p0V3ZYMmdZTkdqaGpuN0VQSGp6d2hXZmp4bzIyWGJ0MndocnNBWkxPQXFEbndwNElhYUdnVE9LNjZyWXFVREQ2dER1dWNZcWU0SzZTSjZFVmlpbW9qL3g4MkpBV2lEOVVrNmFBQUFkUXoxVTFIL1lwa2YvKzRuYlRwMCszZi96eGg3MTc5NjdkdFd1WHNLbXVlL3IwYVpmY0h4ZldvNk9qNWRpbm4zNHFvcVRNd1NnZ3VTL2ZBZVRsMno0K2s0QlZ3QW9RMEFERzNvR3VVL2J1MlNVcGhsZ1Y0WUZKaXVyWWM5R0cyR3ZTSkVRQWNBRnVvRTJQYWJLbkdrSCsyN1JwSXcwbUVaSGp4NC9ic1dQSDJvb1ZLOXFGQ3hmNnJrbkx6TXdVSUxDNmJkczJpZU91WGJ0S0hZdEgwTFMrcGZHTWFkT20yRysvM1crZmUyNmt4S2F5aUx2Q1BuR3VhV2FVVTF3SkswZkN0d2YyaVdkS0NzRjNxV0ltVEJobmE5ZXU1VE1JYTRCVHNNb21wUnVwQkRlYVBIbXlHem04YWVmTW1XTm56cHdwVEk0Yk4wNWljTnEwYWU2OEZuYktsQ25DYnZBRE9HS1VFZy9tSms2YzZNY2tYcUdqRmJ6cXM4OCtjUjMwdXdBazl3TFFTeStPVlFleVM5ZkhwZU1BRFp1QXhkT0k0NWpvU0ZjaDNUQlN4ZXpjc2QwMGFGQmZxaGJpRVAvMmVyYUhINE1BSlJuUG52MkdqWXFLc0xtNXR4NFJHR1ZNNDQzakNRa0pBdVRaWjUrMTkrL2ZmMFJ4Y1YrTUl5YTNiOTh1c1F2VGlZbUpOalkyMWowanlvYUhINWZuNU9Sa0N5aWVEN3NRUUdkMzZ0TFpUcDArVGRna2h0VnRBUXc1cjczNnNzM055VFpTTll3Yk84YldyMTlYeWpKdXBFSURPSTFCQlkvN0hEcDAwQllWRmRqLzlmSEEvK21NTDVJT0dqVnExRCtBa2s3bXpwMHI5ZXVISDM3NFNJZXhyOTg1djdpNDJGNjRjRUU2NGR5NWM2N28rSm14cHhPeWUvYlVxUk8reTQ0WThhd1U5UURHM24zNzloakppNHpTaVVWQWtoZlZYUlZvMEYwN3VvcUhnaHd4d0VYbno1OXZWNjllN2R6cU02bEZkK3pZNFdMb1cvdlRUei9aa3lmRGJYSnlvcXRzOW9sN1RwbzBTZFJWWTFUQlV0N2hvc1FtMXdVL25JOTR3U3lDRlJjWEp5QmgrOUtsZE9uSWpJeUxKV0kweEw3dWN1Wjc3eTBRa0xnM25tY083Tjl0bWpjTEUvOEhvSUtFUVUwZktqWkJsY1ZkVUZSRXAyWExsdElRSDc3amdxZ21RdGJWMWJoZTdUbkFObXJVU0dJMDZPYkVxKzdUV1Z3L2V2Um91MlRKRXFtV2NuTnpCVlN6WnMya0JLUWphQWdXN0MxZHVzUk9uVHBaQU02ZCs1YjkrdXV2WklaQkt6TVUycXhidTlJMERta2s3REJzZ2lrS0FOeFdVd2pBZ2lxcmhZR3FZSERNU0NzOTFsdXU3OVNwZzdqci92MzdSWkhKbHhRSmZHQkpRYktOakl3VWtIUlk1Y3FWYlV4TWpJQ2s0eEFweElrT0k4N3BQTWhBVlJjdlhpaGh0SGJ0YWovbDhEczJteVdMMzdXaHpsVVZaTHQyYllSTkdGQzNWYURja0l1NGlaYy9lLzhEcUlKRkpYWDR4SDJvVy9tY09uWEtObXpZMExuVjY3NUxhaTROeGlUdVNMeWl4S2kzNWs0NmFNU0lFUzZsUE9jNjQzbkxtSGJKa2tVQ2NOT21EVDVBbmswbjA4Rm01WW9QYkpQR0lhS3NnTU50K1FFbUFRb3dCYXRqUlkxVFpWV1pSZVpwM25tOS9KcVQrN3p3d2d1MnNMQlFBRkFvMUsxYlYxVDEzMFJHUHpFeFVlNjY1eVEwU0FtMGtTT0gyK2VmSCtYU3puaUp2MVdyVm9nQWZmcnBmK1I1YWc5Mmc0UFMxSHl4K1RNVEZ0cFloa3d3MmJKbEM5bDJjb05pQUJHOEFOWUx0Zm9QZ2dPSVZpYmE5QmdsR2JKUC9rUk45Yk44K1hJbmRrM0VIWU94U2FOd0o5ZHlmNjFUQVFpNGNlUEcyQmRmbkNEeHQzSGplbGQ4SEJXQU9qT0JqVHdQREJEWDJCRm9xUFhhT29FQUhBZHhWNUk5akFJUUkxVm91QW05cFN4cXlhY1BVR0FLV0psRXRhbUNpb3FLZlBka0tFWnhqaHRtWldYNVNqcDc5bXdiR2hvcWcyeWVyWlVNREZLd2tNSlF6ODJiLzgrZU9QR0wvZmpqZGI1bTRERThpOUNqZ1luOEwrUEkzdTZFc0xBbWdoNXdxQ0w3VUEyTFBDQlkvVHlxdGxySGVoTllDazZGaWFLQ2d1RGRkOTk5Sk9ZdVg3NHN0V3lOR2pYc2E2Kzk1cXRycVBNcXFpbE42akJJN3BzOCtVWDc4c3N6UldDWWhRRGdzbVhMcERJaXozSXZ4SWtxaStjaFhKQVYwcWlCbFJtNFVRNUVpRk5ZbUZTQWdLVUJsQjRhTTJhMEFJUmRWZG9nU0JnckhVeDd4UU5Dc1h2M2Judm16Qmw3L2ZyMWY0akx5Wk1uN2Q2OWU1Mzd2U2psb1ZlYzl5NnBTd2M3QlgzYWp6OFlKUDZvWTMvODhYdUpSNENSVm1pQW81R0Ntalp0S3ZzaXFBNlRURy9NZVd1Mm83V2VJQWVnK2pPQU9jYXdDemZHWFhnNDhRb1lyWWJZYWh3cVNEcUFFY29ycjd3aUFKZ2QrT0dISHdUa2pSczNoRFdLaDMzNzlrbnVoQVh1UVY1REhTbklBY2d6NTh4NTA2NWJ0MGJBQVhLc3E5QklkWURUQVlJQ1ZMQUFyVnUzdGt6VHlHaDY4LzkvYmtKQ0dnb2dnSGsrM2RxL0VQcXBXRWp3Q01MdzRjTWxuZ0RuTWVqRkJQdWFOanpRZmNXVnlJMzE2OWNYc0h4Z0YzWGwzb3hjZExaT3g0cTRLb1AyS1ZNbXlmelJsMTl1dHIvOGNzeXVYLytSc0F3QnhCcWpHUzFDbUozQVhvb0dHdmJXcUY3TlRuU2RKQ1BwMDZkT0dOaGpIQWxBM05SajBxdG11Q0FrSk1SV3ExWk5ia2JQazl4aEZGZFdSUTI2clNjNmZmMlJCYjFPZmNxSEVoRGdESlVZZlhncVd1cWlwSTFYWFhHOWJObFM1ODY3SmY0UW01NGw1U2VFVU9VZ1pyVnIxeGJXbEF3YUlCRXZRQzU5ZjdHUlVmVFZLeG1HQitDeUhqZ1BLQUF4aGg1aUN6Z3U1a1lNczNBcHphY3FQcVd6QnQ1N0RvU0JDZ1YzSkczd1dicDBxWGdGekhtRjlSQi9qSWpJdk9YQ1ovMkd0VElSZHVqUUlaazI0ZFVDSFUwcFNZclJ6OVNwVXdVb3RrSUE5bUZ2NDhhTmJiMjZkU3dqTEJFZWhsdHZ2ejFQeHBQSUxxNEtTR3BOZWlzakk4T1hmOTVVR1dPazUxQTczSW9VQTFDdGpFcEx3VjdDRkNESmlhdFdyWko3RUtjWTh2YzVWa1lQcU9mV2JadnQwV09IWFhyNFdDb2N2QUQzNWhwVVdUL0VOK2xIUFUyQjhoM2dUSi9HeGNZWW1YSy9mNi9JYk51MnhkUjF5RFZmc3VVQ1hHSFRwazErd2c0UEQ3ZDE2dFNSZU1DOVo4eVlKdXJIc0tacnlZUnpxZUwyOVdmT3g0OGY3MDkwb2FyRUllY0NsQmljTmV0MXlYay9IdjdPSHZ4dW4zMXJ6aHZTU1hnUTdrY25YYjE2VllaYjgrYk5rM3RwZFVUb1ZLOWUzUWZJdVZXclZyVmtEUWlVT1I3bVE2Smp6aHFNcEVJZ2JYZ0MxRVpvcDFCZXNHQ0JmZmp3b2R5VTN2WGlzNmtBaFlIcDA2ZEt6QUEyeUNheFNpRUI0N0d4TWZiV3JTd25QTi80SGNHMTFKNjdkdTEwNm52SWZ2VFJXbEZWNHAzT3dRYWV4ZmdSZ0hnYm5vUW9hVG9DTk5NdHVDcjIwQ3BWcW1EWHJGNXVpb3Z1ZXRNZnZGdTRuWmN0TDNEcTFhdnJNNGw3RUV1NENzd3hZT1hHakNib3FXYk53a1FJQUl1c0E1U1NTb3Q3UkFpd3NLWEhpRU9PQVlSaDB0YXRYd280WGpWd1BlZFJRNU9QWVpIbkVIZFVTY1JqOWVwVlhSZzFrRUYrVWxLU2dGeS9mcjB0VTZhTXVDemxhWjA2dGFTbytPbndJWm0vS25uRmxXWUtDdk9NazJxRCtHaFo1RlVOSGxpQUhqbHl4SThGVkxObXplb2xidDFVQUZOWEFwYWhtbzVrS0Fwa0ZxMWt1cC9mMzNsbnZ0U2JBTU5GWjg2Y0ljQzltWWx1Y2o2YWdPdlZxMWRQNG83cFRoaUVKZkoyMWFxVi9TbFFCdW5seTVlWDBBSmNsU3FWNVZtSUtrMm1JMlZpK1dLS1NVOVBNOFNKVnhnMGwwQUdJTDRPeUlNSEQvcVRVaEVSRWM2TksvbFZFV1VoV3lvajBnY0c2OWlVTFlacnVZYnJrZzl4VnhqamQzbVpVekp5OEpTOWhiZ3Bzdyt3U0MxYnExWXRBWW4zVksxYXhZblVZdW53clZ1M2lqanhLaEIzTGxQRzhEN0dGT1RmbG5EMHA5U1RVK0pOZnY0ZHc4c2FHTUpsWVJLWHdkY0JpYVR6d1UyWWlDSXU2RFd2UTd6NVdoaEZMUUVGbXdEQWhaVmR2dXVZMVFQbk1RZEl2bk12WmF0U3BVcmlQYW1wcWVLMk1LVmVROHdoWm54US95KysrRUpJS1YrK25MQVpIbjVjV0lSRS8rM3NwWXcwYytQR05aT1FjTjVnRkJXRjFvRTBCRWhCeHNmSFN3NUVKSEJyRE9MaFdnSUNHSVpnRTJZb05MZ25Zc0p4dGpyendIZUVDZUI2RDBEV3FGRmQyT1BEeUtSS2xTb2xYdVdCckZpeHZJdnI1LzB4S0FPQWN1WEtpVXVqTGJkdjU4aGJPcktIZ0pSVkhjNWRVMU9UVFhGeG9WbTllcVVoZURVZWlRMUE2dGlQRDhrWkF5a0lFQUtNODR4czdqT3FJTDNXTVNBbzdRUTA0TmpYY1N4dWlOc3pXQ0FVR0dYd1VWZjFFbjF6T1FlWFpJeEsrT1RsNVltTlpjdVdsWG9WRm5uVmo5YVFPVVI0NURWWGFvS0ppenRucmwyN1lyS3liaHBtdjJyV3JDblZEVnRLTUowNTQ4UFVoRmNVdEJaQUFQUVV1WmxzZzhlMGdnSVFZYUF1U3lmdzNYUFBKdUlGSHNpR0VqSnBhV255UGxQenNwY0htOWlHRFJzSVcxb1lVQ1ppQzIzKy9MbjIxMS92aTc3Z3J0ZXZaUmdwNlhobndJdVIrUE94c3FVNE9IN3NpS0ZIRWFGcTFhcktWRVZ3bU1RMFB3ckhRelVlbFVXMlFVYTF3TkRZQmJSK3B5T0lJVTFIM0E5WHBRUDBsWHVGQ2hVa1pDZ0s4QnJPb2E3VnVWMkVyb3dEMk1NcCtVMFhjc3lhZzRuMUF0Y2RhZkxLbVFVRWdLUHg3b0FmZjMxd3oyemF0TUhnTnZTcVZqMWFaUkNYOUNqRkF3d29LRTBwSE1Od2JSelRwcTZOc1FEa1hBQnlMeHFpUXM3a3cxd3RJTFg2NG53NkhuV2xvRml6WnBYRUozVnF4Tm5Uc3VRR3NTSDM4NDZWdFVBQ2lxVWd1dVdsSmZ1Y1VGUlVJQzlpSzFSNHpNVkVEYi9BMWhLUGFvYmpBTU5nRlExbGpPOEF4REJsaWFhQWRFVEI3M2dOMzJHSzU1RkQ2VkFHM3FRUzRwRlpQby9KVUxtZXppYzJBZnpOenE4Rm9DNmk0czB6NjR2QTRiK294RzFoa0gxK1pKdWRuV2x5Y3JJTlUzOUljN2x5WmR5UTV6MmZVY1o2dURMR0JZc0NEM1NvRDFMQllCaGdNSlNtMzJuc0E1YjZHZkZ3K2lEUElZVlJWbExOQU5UckVPOWVnQ3RiMWpEZlk1eEZKYS9RNDJWWkhJSUtIbkFKR05pRFJWM0J4SlpqRjl4dmhhNTNTQzJNOHlwWHJpaXV0R2pSSWdHSklTUmZUUnVBQ2Fxc3VxY2FCakJjblBTazN4VWsxOUlvMnhDeisvZUxaZlpjQnI4MWFzaUlDQ1lwTzNrZVlVVEhyMXUzeHJoelM3d3dWUUNpcXJnckFDVW1DVkJPQUN6N0hPUkh2bCs1ZXRFa0pTWElUYTY0WThRQXJrVGJ0MitQQy93L0pCWFE4eHFQS2pZS1Z1TVRJQjdBZW8rQUxHVzBvWUNrRXdrREJJVzRKM1dvdWpLNm9NTUF5SGtiTm54czh2SnloUVFBYXM3SFhYV3hFbDRwd0dCT1ZSWUc4V054WFpjN0tSS1NIYnN3bXVaK0o5L2hJdFhkcU5zVkRqSWxRZFVET0dYTnF6dERmZmZWVWd5QU1NRVd3RUdnNm9Ld1F5M0xPMG1HWkJRQlZGdE1uOEFrSFF4QVY5aWJodzhmQ0FsVWErUkRCYWRMV3lFS0F2MlkxSFZvZ0FPb2dyeDhKVjIydUM1bEg3a1VlU2NuTWEremYvOWVTUW1sS3R2TUI2WWdOUzRaT1JCemJKVlJybU9yb2dQSVR6N1pKRXd5eVlXeUFoS0FQSk1pWmUvZTNTS0tGOUtUemNWTHFXS2p0L1JURjBSQVZvcFBtcjlRbHhPZ1czMWEvWnNMOEcvT296MjRYeWdMOXRxMWJTV01NbDFCc2UwTnVMMzVJSjBTVklDQWgyRllaTVFPSzdpZk1xcE1NdUxBTlNuK1NZRXhVZEcyWXZrS3RuYXRtcElIUXhyVmwrRlRrUnN4c1E1WFY2MWdLeUN4RzV2WngyWUtBWTRKT0YyM3F2S3JnYXY3Q2xTM2hRVjVzdTZVaEk3Q2FkWGo1Ynd3dnhSVWtMRDZieUFCQmtqUGRSdEpFYzc0bGNxS3o4YjFHMndWcDZ3QVpQNzA3SmtUTWdoT2lHZGxkYXpZcGhXYkRobXhqeTJFK1VNdDlXRTltY1pKTkhwSmw0QnlzVEpMRHJwWG5HK2lveU45b0NvNG50Q0VsVlFvWWY1SVhVRWlKSUNrd1NDdTZqRVpJclVuazFaVU1vejJ5N29jQ0VCbStBa3BYUlVOaTdpamdzUitYWENsNExDVkxiYjZmaXdqa1JLQVNqL3VvTWVDUWEycy8vcXcyQnh6NVI4MUtlS2pxcXAxcUFMOE8wamMwZ05hVjQ2UkhtaUlER05EWnZPSVAwQ09kZU5UUkJGanNWUFhBR0tMcm9VUE5teURFQVVySU5WVkZaaXV6Rkx3NmdhNnhqVDRQVEVwVG9DR256aHFFQitBYXJubUZkdWgvd29TSVNrRldsOVl4SDN4QUlad0FFU0FXQTNKc204TTFjWEYyTVQ2T1YzQ0d2UkVyd0FvYlJxWGZsN3hsak9YaXBDQzFCWEJRYi9uNWhMMEY1SkVlWE55TTgzWmlKT0cwUVZGTzREK0RsYXJHUVdwRFpBQUJxUXFLTzYvZlBreUdkbnI4M1RObklLRlVWM3NxRXRabFVWY0ZYQTBiUGN2Vm1BS1dPbFh0VkwvVjRtbUpTV2ZONmxwaVRKTXl5KzRiYUtpSWd6alJTMzFQQ0ZxOGdoSWhtMG9xRTZPYWFKSGtBREkrZDkvLzUya2lBeVhIb2cvUU9oS2FsM2tDSlBzNjk4cWRObTR1aW9BY1ZjWk5Pdmk5YUQ0Y0pLeXB1eHlzZ2EyZ2dVZ2laaGNCZUNpNHJ1U1Q1bkxVVVlWSktDcGpDalJBRWFyVmNzRFNDNWtWRStsaytoR1JacmtVZENVWkFERWlaMnNBV1FGbWE1VzFuWG9tdnJVUlRVcjhGMVNpRElHa0NBWUJhN0NvMHlyNkpRdXQwenhyK1BodkNYalFlUEhqWmJDR3NaMHdwZDlSaFEwOXVzdzZVVDhQVmJXdnUwR3V5d1QwK1djR2lxQVVsdUNpM1poVWhmY2E2NVVVRUd4OUVGcW9sZVYxWFhuZjQvUG9PandJTDJoTGlkVjEyY0JGTzZ5ZVBGQ2c5amdocmd3d3lMYVl3NFV4d0RJVkQ0TC9saUN5aUo2bU5INzZScGM5VGJ2dnlyZU9uT2VyWC94ME9jR3M0TXl5ZjRqNFA3dEwwckIzNExwUXgrc2Y0UUpQbERGaW1IYW9VTUhEVytnbUxTaW1OZnBSbWJwM2wreVNNckpBbGN1VWovcnZ3RkV1VXYrMWFCL3JWTEJ3V1YxamJuYXBNOE1GZ082angzL0JTbUErYWF0aUdwMEFBQUFBRWxGVGtTdVFtQ0MiLz4KCTwvZGVmcz4KCTxzdHlsZT4KCTwvc3R5bGU+Cgk8dXNlIGlkPSJCYWNrZ3JvdW5kIiBocmVmPSIjaW1nMSIgeD0iMTQiIHk9IjEwIi8+Cjwvc3ZnPg==',
+  red:   'data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDgxIDcwIiB3aWR0aD0iODEiIGhlaWdodD0iNzAiPgoJPGRlZnM+CgkJPGltYWdlICB3aWR0aD0iNTYiIGhlaWdodD0iNTkiIGlkPSJpbWcxIiBocmVmPSJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQURnQUFBQTdDQVlBQUFBdUVrbXdBQUFBQVhOU1IwSUIyY2tzZndBQUplcEpSRUZVZUp4RmV3ZDRITlhaOVptZG1kMmQ3YXZlWEdTNVlPUGViUXdHRTBpY21Cb3cvSFFDK1VJSlNTZ2hoUFpSRWdLaGR3aHhBcUVrNUNNRVRHZ0dCeHNiOTk0dFc3WmxKS3V0VnR2YnRQL2NXU21SSHoxYWEyZG43dHZPZTg2OXI1UnYxcTZDeStXQytKTDUweVc3NEhGN1lHYnlzQ1VnWEZtQmRENEhYUytoTWh5RkRjdTVObFZNb2xhSndDNmFTRmtHTEk4Q3llSUhaQysweWlpeVpocld4aDA0c21jSDdGMEg3WHk4R3hXcEFseUdEa00xWVVRcW9kVTJRSmt5UVZMT21JZm9xRkh3WlZ3b3hnZVFOZ293WlFOcXdZUWl1Mkc1VlJUTkVwRExRK1lqWEY0WnRsVmVzeVJKWEw4TXl6SzVSZ09LSXNQdjk2TlU0ak1NL2w5VkZNY29ZZVIvTHVRaUJsd1d2RzRaS20vczRrMThiaS9mczFDeWJONVZSc0FUUWR6aWUxNmJEMU1CTFFnL0RTdjBkdURnNXg4Z3RHS0YzZDE2QkVVNkltcTc0RGZkY0VYRDBEMFNTbDRWV2k2TDRvSDl5Ty9aYnlzcjFrSmVPRjh5RnMySHE2WWVBZDJIVEtvTFVGekk2bm00N0NLOG1nYmRwNkpVeUNQa2NrUFJmQ2dVaWpSQ2h5d3I4SGc4enZxSHZvU2hNdTFTTE51R3hPOTh2c0NMM0U3MHhPOGlYaEVSQXpaL3J5aThzVzNTaXpxOEhoL29BK1NMUmJqQVJmczFTRDZGbnUvQjhmYy9RLytYWDltcDNmdVJoSWxJc0lMdk15TUtFcnBibXBIdjZFWURJNkRRUjdhdThqMFBIZWVDbk9oSDRlOGYycW5WNnlBdG1DNVZNS0phN1FpWXBaTHpiSmxoTTVrN3doQ05qdFRwYUt1azAzbEZtS2JKMzh1TXBNSm95ekRGZS93Vy81ZkVzOHJXcW93Q0kwSER4QVVpVmQxWjNseFRJYW44a0duQnphaFpKUU5HUG9WQUlJUzR4Z2p6WnlsYndNQ0tyOUQvMGIvczBwN2Q4REJhdFZYVnlOSDdlZE9MZkc4QnRZdE93OElIZm9FM2I3MExkWnQzd1YrbEllZnpRUytXV0FhTVJuVVlic09HSjUxQS92TXY3TmpXRGZCOC93S3BadjVrS0hWMXlIY3ozZk1sR0I2WlFiVlF3YzhrNkhBM1U5ZTJsWExtY1kwR2pSVXBLNzdMUmt1MFRTbW5wZXAyT3orRmtSclRJYVByY05GQTNiYWdNaVhBVkJCcDdLbndJOGUwakFacWtQaG1IZHJmZk5mT2JONkpBRlBkVTFVRmcxNHVRb2JiVGpNQ1RLZGdFSk4rK2lQNElnMW92dUFDSE51OEh5ZHhVU1lYNkdLVzJMWUJNODFvY0IydWtBZGEwWUNuTzR2Y2kzK3hqeDJZQ2YvRjM1ZXFSMDJBSzI0Z24wb0Fxb0dNcThBZytKeFVORTNEd1FmZGVXMDU1U1RzOFB2ZHptdEZSRTk4Q1crSUloVVhGMHZNK1lBSHVYUUd0a21qd2hGa0ZBUEJxQjlCL3Y3RTdsM1EvN1lLOFMwYmJUWFdqYVpJQUhsZkdIbGJoWWMzbDIyZG50YVFqZmRoNUJYZmhXL3NLRDRkbUgvR0dmakx0TDhpdWE4VlNyU0NiaUJBMkNMMW1MTEVESW5Qa2xRTnBZQUx3UkJMWU0xV2xIWWZ0VlBmUFYzU0ZwOENveUVJS2M1ZzVDWG9BZVlmOFU2a28vZ3FZNGhyOExXTWJEYnJSRkVSSGhCZnVpNDVSVWxUblNqbVlUajFLSnNxRjI0alVGY0x6MEFjKzEvOU80NS9zc29PSnRvZ2g2dFFhaGlGUHZFcE13OGZjckJjOUtCTFFjWmlUWGg5Q0RiV083aGJvQkVST3NycmpiRHdYZEJZM3dXbWZZNVY0cEU5Q1BCM3NzR1U5WnJJcXdVWUpScGY2NE9XVGNCNisxMDd1V2tUbEN2T2xiUlo4K2w0dWliWDY2eHp5Q2p4V3FTcEFFeFJZc0p3SjRKdXFDZ3dZcVprbzBoNERvYUNEaktwUmdDR2lFWlZBSkdRSDRrMW05RDI0aHQyZXQ4MitHc0pFRlZOY05ORGVUUEhoMGpRSkJmVFUwWlJJcnpUSkRkRGxuS3hKa291Wm9IcVJNa2t1Smk4VHFWUkJ0OXpzUTk1V2FzMjB0RHBkVGNkVW1JV2VWVXZBb3h2SDFHU0JjK1FTSEMzdDhGKzlqVTd1NmhWVXBaZWdHaTRGdG5lVHBndTNvME84c2xwdHFZTW4reURxbFZDS3ViTGFGcjB1T0FMK0tFVGZqV1Jyam1tQU1GQmwvSlFLb05jY0E1SGxyMk5FMzk1ejFaWVU0SG1lc2c1ME90QVZqSDVVMlVOWlZGZ0RZczg4eG1NQ29IQWIyVGhvZU5VbGVrazJ3N3llZTBTbWtkV0liY3VDUzlHRVlWTGtIU2I3U2hFSk5lUk5HSU8vRnVHRDRyRVNpWUc1TE5GaEZUV2ZZMlB3S2VqOE9GcXUrSklESW1mbnk5cDFXTmc5UTNRUWYxRThpanZ6eXhrcVJsNTVveXJESjVFYkhxU040bUVmVWltc2t4TkdlRklCR3JBaHhOYk42SjMyYnQyZnRNMlJDdjlVT29yVVNJZzJKb2ZXWnVGenJ1NDhubGU2MlZLQ2Q4cFJFK2J4cmxnS2tHQTZYYjg4eTlRT3RJSmwwalpFVFVJcHZQSVZWUXlqZG5mTERkQzhDRExWbVNGQ0hZSXc4cVZFQ0NRcEwyOGQwbUFINUdjQ085aENibDhHbE83QUduZmZtUWY2TEgxaXhkTDJweFRXRWFzZDEyVWg0cXdpMDNlem5GdGd5anFTNUd4MEZQRkFtOENEVlp0aUFqa3dzSDNsK1BFVTIvYWFqd0diWFFOVTB0Qk1NdUc3VmFRdG5Md0VsbDFJcTJsRVl5WURnRW1aZFppMDJYOWtmb2dWVXJDUThNNzJvNWdmK3RSb2pKaDNUQlJ3YmREYmh0aHlRK2IwYzJ5OFp1Q0p4UVplWjJOMlVkQ1lTUVJLSHJaZHhrSjBZLzFBclBDaHEvb1FkQ2pvZDlmZ3JlekI1NFgzckJMc1pSa0xUa2YxVW9BbVh3ZmVzd0VRbEUyL2J6czlFakZDTENQbUlScjNRT2pudjdNZFdQMXc3K3hTMSt1QmZ3QmVKdWJXVWRzK0tST0taVjBxV2pUcXg3Q0Y5T1JVVW15dU4yaXA5RUFsU1dUN3gxQVlrUTFXczYrQnRxOENmQTFWalBsU1JUbzBWUlBEOUo3OXVIdzFoMDR0SDBUSnBleUNNZ2xaT2tjbjg0MnhWUVd6L0RyQ21RZm45Tm5vc0NJQnRrKzBsNnl3RHo3SHA4djBUSHVpQjlGbmJYKzVnZDI5dHN1eWJ6dUtrU0k1dEU0a1Q5Qm9IUmJEdWdvUmJJSmY0RkdWa2JZeU9OWS82dEg3UHk2OWZBMU5jTFBISFlSZUFSQ2VjbHlpb3lPenI2bEVLbXlCQ0JOZFNIQTFDenhSaDdhSHU5Tm9lcU11VGo3bnAvQU4ySmFtVE5KZklPSURFSG5taHVoejV1T2FkZGNnYzgvK0FCYm5uc1ZZM3RpYUtwM0k2TVNJQ1FWSVJxZ0VGUXk2UUZValo2SUdDUGF0ZjhJL0FTbkFvR1FMQTVXSVljOGVUQm9SS2xXZ3JwcXBaMGhrekp1dkZJYVhqOE91VzlqS0xBenFpckxJc0NDTnNQa2hub01xMis1MjViV2JrWDl1QVlrVEErOGJEV2dSMmtpYVJHOXdRWWRJdXJKd2poQzhZQ2tvMDVoS3lIcmliR09aMXg3R1ZydS9oOFNZcTRpejBZdkIrRWkrRWlNanVpRHdrWkRMcUpLOWVDSzh5L0dybm16OGMyZi80ajRSeXR3RWh1OTJsU0JydjQ0R2xubmFpS0R5cDh1Umh2VDdlaXZuOEIwemV1d0xVRVBaZGFpU2lBcE1zcUZBaE10SEVRVDZ6TCs3RnYya1o5Y0pkVU9Id0ZsSUYydVFVdnhvN0xDaTdVL2ZkQXVmTElLSTZlUFFZS1lIaFZlWjAwVVNSRWtnVWlNcENaU2xUWFlKVnVzbVJJTG1pdG1XK2t0RlREaTBpVVllOCtOUk5JZ0N2eU1seW1WYzdnZ282OEtCZUYyQXFyUlNSQmNWRTFoTEJjWnVlVldiSmcxQTlzZWVSRXpqdldob1RZTW96S01FNmtnWmphTlF6Z2RRekV0VkVTV0NPdEJnYjB5bUNDRUt3UElKTmx1K1B3VXFSdVJDZGJCZlRCZmZjTXUzSHUzRkNXRHlwSFFLOEZLQ1lmLzhWZDB2ZnN4M0MwTjlMSWZHbEd0bUIxQW5qYTZJbEZJalEyd2ZVR1UyRzlNVXFDU20vMnJvZzdIQ0ZEK0xXdklEWFhNdU9SU1JqcElpWk5tejZQaGxwY1Vqd2pOMml1SkNMb2R1MkFVU3RqNzZVb1UzbnNMWGN5V2hvbFRzUFJmNytGWkV1ZjlkOXlIZWZVUkRIdnhLVFF5dlh5UkNweEVmdHM5Yng2MkVUMTlsRWtTYTcxSEpXT2lnNjJnRnljdnZSaDloZ2VybjNrV3B6TVN5cDQ5R0hoM0dhcnBPTnNta3lsbU10ajcvaGQyZ1ZHSkVpd3l0RHJNWGxSeitxVlFaNHhEY09aazFOUTN3ME1XbjJZa2hVYjBjNkVCS290OW1RSytYcklWVlZvUk5xbVR4alNFbHpCTk51b0FvTGlZWEFXcXhTYnZJOXk3c1BuSVRueCt6NzFvNldxRlZsMkhxbFBuT0paUGtqdzRURWxselo2UFlDVzFvbWpndk1mSUNWTncza3VQSUpFdlV1T1JBWkg4UzhXQ28wZmRtaHVqYWtheW8xcG9YZGVDN1BJTzFFY2pLSDY4enU0ZFAxT0tucjBReXBITlc1SGR0QmVCQ3FhV0lVaXN1eXhQV0d0TjRVcFUxOVRRR3BGZU90T1dSVXYrU0RMRzlFdWdPVnlOamVTWmlTOCtSLy9LRFpDdkhBOVBuakZqWGJMK1VTcVNwWVI4OEZEOHNsRFo5NElZUG13OHpuemtmZ3gwZll1VzZkTXdidFpwV1BIWisraTc0MTRzYm14RzlPcUxISFppV2pUSTVjRis5dUw4aHgram9wQ0JLMGRpenZxM2FKeHFSbEZNWkhGNDNsallUVUhNM1hZRTFjMWowT1VoQ081dVJleGZYOXFlQlJNbEpiRnpIL1ZZR3RxSUtGT1M0T0ZYa1dGZml5Ly9CNDUvOEQ2ODlHWnc3QWlFYTZ2cFZjV1JKR2t5bUFEVHhNNEdVWm1NTTNwZWJQdnozM0RtbEJsUUprOW1CSVhRVEZIbGg1QmllUHE0d1BUNkhaaXc2SHVJTEp4Ry9FbGc2c2p4Q0xWTWR1cXl1WGswZGpSWFl4dlR1L2IreDlqVUNXcjkvWmg0ejkxbzZ6Mkt3dXZ2d2RYa2Q2Z2d5RkYxbG9oR2pCQTlVLzdzRUNxb0xadkdUWUI5Y2d2NlZtOUdRamkxN1JENnRtMG5NQjQ1WWNzS1l5TGt2WnRNbnJrdCs5eU9jcEJFeXRGenlVMDcwVWVWSVVpekVKQkVjUlRZTHNJeWVWK1EwU1g2Rlh2NzhlWE50MkhxemRkZzVJVkxXWE1TV3RldXdMZlAvd0hxem0xSUhTU01kL1pqd1prenNHWDNEaHg4NG1hY2Z2azFHUFhNL1dpYU1CSFRYM3NXZTI3OE5keGJOOEVTVW9jb21EcDJBQkgyWm9VdFM0bElqaER3NkY2NFBJTGRKT0FobXRaTEFWUlVEZ1BtVHNTQlhWdlJsZWhCTFNWYm5sSFc5eHlEa3Vub2dob1cyeEVrYlFhYm95REx4SE9EVGRTaW9STDdIMHVTVEVXaVVaYWpEeldCaUl5a1crd0dNRjZtNE1SaERlbDRKN2JmOXhENnQrL0FqRWNldzc2MkxoejZhaDlHUm56d1hyVVlKLzMyRHVocUVCYy8raHkrSnN4R0w3MmNwTDJTcVd1Z3lodEZoQ2xkRXdvalR2QndFK3krL2ZRclJQMDBpUExKb3VPRnVwSFljRlYzRGlXQ25vLzNVaUsxd093cGlDZGphRHV3bTRWUG9jNTFGY2wrQWoxSm13S1pBRUR3c05oRVpZdDhUMnp3NUFyOHFjQnJ5YzRtVTVwNTcySGYwNmc5RkY1VG9FV3k3R1d2TEtLZUxJVWRCd1loM0Z0VERYY21qejNMbDhPZ0FKNXgvWldZdkcwMUh6NkFpU2VURWNYN2tmbmlHN1RNbm9TV2gzNVArdWVVTmpJRHZUajJxOStqbVVnYTB5VFdtNGxzZ0tEVzhTMkJpcHlVR3RSMGV4M1ZRQ0JGbUEwNkxOWlMyNERBcWRQUkhqK09qZzgrUm9oQVpES04rOGlROUd3R3BkZ0FsRkEwaU5pQklvTDBpRjBRd3FXRWVqOGJLYi8xYklGcWdXeUYzaVpqUlk0MTZpVW45VE5WQ21ZSkVjRnNXRzlwdjRSSWl2a3NrL1F5R3hyb3BKNFBQa0xQMXEwNDdkUXowRGgrQkU1OC9IZTBzeFgxcy8yTW5IRVNxcjkzSWVvcUs5QjVyQU1ELy9vQzBlNERjRlZYc0Q5R2laYTIwM2RkbWt4SHFhaGhaRUc2WmxnbDFIZzFWRkpYV3FOR3dqTjJGaEpNKzk3M1Z5R1RUWkpwVWRZbFM4NU9uOEZtbk9pbk90RkpuOVN2eFJZZERTQjQrQml0RTRraTZvaGlrV3JLcUpRTFBRUWR2NGRFVjlLUWtUS01GL1dkMk1OaDM4blpKa2s0VVZjakFMRTlLRUlCVU1pNkt5cVk4akkrM2I0VDhmLzdBSUZoSWJSY2NoNE9aWkt3UDF5SnhLRW5jUlJDS3pKcmVHOS9aWlBnZFhEeFdhbUFESit0TVhvR2RhYkNkSlFRWmJRam9RZ3BaUzJzbHBQaE9ia0pKN1pzUnQ4SFg2RExTS0hJM3B2b2kwTXZVVUtUbUErVU1xZ1RPd3MrZG56SkpWTFJkcWhOZ1FzUDE5ZWdsN3pTWkN0b3FSME9LMDFjSkFnVmxhS1FrMkFMSkNDVk83ZFhiUGl3TGtzbDNkbjI0TDB4a01wQTdlMUY4QWRuNDV5WFhrUkhWeElScGxsbFJSakhubm9NaUpHeEJLdVJqNUNaUkFrb0xBT0RERVdpZlBLeE5TZzVPa2pPbzhUTXNWZ3FEYXk5Z0Q5TVRWZ0xkZlJ3ZUlhRmtWajVEWGF1L1pxY09JYzBVN3RFeHdtdUtyWkFNaFRzZXE3STFzZkdGaHpSU1BWS21VVGp4STVhZ1JKb2RDMGI3ZXdGYUh2bEQ0NFdtemx1RG82eGIvVmtlbERCaGFtOE5rdExQS3dWbFlpVzQ0MjlaRDJlUEZWOGtGSmw5aXpFZXZPSW5uVTZaUExPazVwcUhMNHROb1phWnMxRDk5SmV0SkhjMjVSUm9hNHVDR29nTm9NTE1qbW9pQ1BCcnFEYXFDYkFCQWtRb1dBVWhjWkdlRTRheTFMeW9tM2xLclIrdEJKWm9tMW5La21OS0ZHWW00NThFenNHa21HekcxQXFNWXVVNlBpeGpEM3pQcHNvYnczd2d1TjdEMkgwNVpjaHVmTVVIRi8vYitoRkNWTm16SVFuWnVGSVh3clJRQWg1b3F6ZjJaRXpJQkVZZUZ1a0NlMWFYVFZtbjdjWXZWbzl3b0xKN0drRHhyYzRnQ0pTcUliOHRuTEpZaEY2dEZNS3BidDZLR3lwOXFrTEEwTDFrNzU0dkd3RDdqQWlUUFVnVVRiVE5BemhpZU9oVWs2MWZmSUp0bjY5RHJMWElqSHZvK1BFRGgxbEZsRWlUQ0RNaVcxUDlrcVBGcUFpcXBjVXRhNWVDalUxMnFrZHZleHBNa215RDUwZG5SaTNiUzlHM25rRHVpL2FnRlFxam5XN3R1TUhVeWlCWFAzbzZPbEZ4QjhzYnlZeFBjZzZtZVlLMUJCRmJDeU5kZmU5UXFoT1FzcFJ2YlBsWFBEZVgxQ3FxOEduZC84Y0RSdDNrczBKbmtwUUkxZlZLTFk5QVQ5THdISjIxR1daUFpqOU5VaXRHUmpHOGhqYmpLcmhvNERPYnV6NytDTWNPTnlLZnBlT1lpcUhiS1lJbFVRRWFlcEtPbHRzQkt0a1FXSTNSdkpUUkl3Ynd4UU5SRkUzZGl6NjFud0RYOERudEl5YXFnaGFYMzhiY3hkL0Y5V1hua3Z5K2o3QzFHdXJ0bXpEM0dsVFVjOEZiT2s0d25UeFUvMEhuSzFHZzNYb1pxdmdLcW13TE1iVGh4dzlibENCREJBVjg5NElrcWtpbWtrbXpHQWxwVThPbXF3NGFXc3h0VlNDU1pSZWo0aitTRTZNVWZXUVdzWTVZQlhmdmgwSHZscUZvOGVQT1dodUVBQnpSek1JWERpWDRwWUNkMmV5VEVJSVZud2Njbm9Pd2JvUjhMY01aNHJ5d1lFcEU1aWJzbTB6dkZtbW5OZW5JSE84RnozUHYrYnNTUC9waXpXb01Rdm9ZeUYvdG00ZHZqZHJEbVpNbW9nOUJ3NGlxek9DUVJKcGt6VXB0dFBacDlKTTJmb3NnWXZyOURNbFBmenVvOGxLZ2Vtc0VLMVpMMzZiZmMyd25lMTFnVXhpRXl1aWFZZ01xNE43V0MyODVMaG1wb1JkeXovR0lmTFJGT2xka2ZXc0Z3MzBIKzdDZ3ZPdmhIYmxBcXk4L2JjSWxzaXlXSnVDbk9mcE1wdnRyV2JpT0dnRVN5WFJuNkNCTGFnY1hvZEVMRTZhRnVSRlZCWk5sZmlHTXViU0s2N0d2Si9laEowUC9CSjFyQVVyYStQMWJldHh6Wno1bUQxcEVuWWNiRVU2bVVWRkpJd0NIMFN1aTFvdTNCQUhJV1JGZXJ3UGNpNk9kQ2JHVnBSaEg3V1I0RUxTaks0cERuaDRUU1hUc2pvU1FiUzVCZHJvTVpCcmE1SGZld3liLy8wdkhEdTZIMkl6MEdCajE2bDBTaFRXMWMzRE1lM3RwL0R4QXcraDFOcUY2UFJSaUNYWWZpaWxGRHJhb29pdDREV2FRTkUwSlhHNGFUemNZOFpBYjErRkdyZWZkY09IMjM1NE5SdUhIbjhNSTVjOWk4UHZ2QU4wSDBVcEZFSTBxMkQ1Nmk5eDl2d0ZtRFp4QWpidk9ZQllQRVBaNUtPU01FbVRDUEYrRy82MEY4YlVVK0VaTVE3TlRPdTFkYU93TDcwSHphNGNpaFNiRXB0MmhSTENxTG9XeUNUSzZvUW1PcU9JYjFkOGh0M3JOcUlyUStlSXpTa3lrM3c2UlZGak90c2lsN3p6TzdRZU80S1ZqeitPSDB3a3diL2hldXk3bHhyU0xxRkVBaUlUbVB3TEYwcG1UNUlHaTdNNnBrMzErQWxTMzcrL3NidGxYa1RvZDJkMDlwNEtiTm14R1pkdDNvV2FTODVGOTRQUHdlKzFXWHMrZEpFYnJ0aXdCZWZObVl2NUU4WmcyNkhEaUdlRnI2bmppTXBWcEh2NWZBN2pMMXpJb21aZlk0cE92ZkJVdFAvdk5vaGpSRitnRWlQZGROYjRNZkJNR1FOWHRCS3BmVzNZdDJZampoODlncGdxRVlRODZPbHFoeGt6WWZJZXg0d2d4c3laaGREM2x1RHZWMXlIczY2K0V0T3V2UnJhd2tYNDVwMS9JTEYyQXp5MEIxTWIwVVNDTHBRUFNickwwWDdWQytaQWZlTnZwRFpGMXBLQ1NHV1k1VXpxRTkrUHpTODhoOGxQUG96all6NUNYVThuTXY0MEF1eWRRaXgvdm5rVHpwNHpHNU1tak1hNjNmc0lxMXg4ZHdFbUhSRmdUUjM3eXo4UmErOUVwSmIxc0hvcm1waUtOU1RmVFkyakVaallBcnV4RXJsY0RsM0xQOGVKcmJ2UnBXZVFKcm5XZTJLSUgrNkVYbE9GcHY5M09wb3ZXWUl2WDM0TjM3Lys1OWp5MTA4d2QwSXpUbm44ZHdRMG43TlRNUFdVYVdqZHNnRjVjdUhKa3lZZ0dvMWlZSUJjTk12aUhXQWJhS0Q0cko0NUZaMWZyb1F1OWk0YmZJaE1IZ3VUTGFOM3cxNU1XSGNVczM1K1BiYjgrbjlSenhxVENUb3FEY2dSQVpldjM0REY4K1poWnN0b3JOKzVtelhqSXRMSmlJcEQwNzVleE45Nkh5a2k3cGpod3pGczNoeTRheUxRS3lMVW5VVERiM1ppKzg0ZFNQUjJzODlKeUJPWU10L3lNd1B0bUhEV2VUanptUWRSd3o2NmE4TWVMSnd3RTY0NU0vRDV1VXR3MlEvT1liYTRFTisxRFo4ODhSU09yL21hUkp5bUNwVngybmNrNTd4RlNNQUNDVzFBRjBmWFBvVFBXb0QydGV0UlFUSjg4TE5OR0ZXdFlmNjFGMkxIaXJWNDQ0OVBvRDRjZHJiMDR2MDlUQVgyTWJ2QWxLV0daSVA5YU1OYW5NbUhqeU16MnJ2L0VCK3VJVUZVTmQweVFsUVdLaFZBM0dJdEhUcUlXS3RGY3B5QkdjOGlrOHV3YWN2d3NFd1NGTHdEZlhrTUhJL2oxUHR1dzFrUFBZbmlzYVA0MjA5dVJITGpibHk5ZWlPV1BmTVlyUDBIa0pnd0N5dnZmUkRiWDNzVFBZaytWUGtDcEd4WlZNMDVCUk9ublluZXZyN3l2aWhKZ0FQWGVqYUwrak5Pdzc0WDM4YU1ZY013Zk9VZDhMTU9Uem4zWEl5Nk00YXVnd2ZRdCt1d2cxVHRuZnZoT253VUdhWm92TDBiV204UHZJVWlWcTNmeVBZeEdVMjFUV2p2NjJUTFlMUG12YnNWSFhIMnBzcmVPUHFKb3JZNExCRzcyVFlOQzJxZ1BrTVgxWURKSnRiVjNvL0ZkOTZFVXg5NkF1L2QrZ3ZzZmVaZG5OQzY4Yk1YWDhEQlFoeEhubndXTFV6enpvTjdjWGo1UGxpc3VRYTJBN0QzNWhOdWpKdytIWDRLOE16aGJxZEhLMTZUQk5kTmdaaE5vMkhVeVZMVi9IbjI2bmZmeGsyWFhZYzBtM3Q4dzNhTW5UTU5ZK2N1UUo3Zm5rRkZUMzZGRHBnNDNMb1hXMTlZaHVQL1hJN2hiQTFiV0ljakdrZEFEWkRkazZ1NkdWMGZ4T0dxRHNOUEZhSXFRbnhDWjN2UUZLOUR6QzJ5L2dMN1crSkVBczB6WjJEU28zZmhqeis4RmtjK2ZwM2UxN0RvalBNdyt0cWI4ZnpaaXhFMHNrZ1RuT0lrR2o0S2NtOGdnRmlwZ0V3eWlXampNRXk4NkVJcGwrZ21JL002NUorOTF5SmE2U2p4QWlWUWkzRS91MXJhdE9KOSsva2w1NUhNeXNpbWk3anBUeStpY3Y1czU4ekJiS3loZFBLaG9BWFJST2ZVajVtSk9VL1B4RjgxUDNhOHNnd25VNmgyOXA1QWtNWlVFT0tsZ29Va0c3OWJwUW9waXBNcnNQOUp6cWJ5UUNiRk9yRXdZT1lSeXBKazhKcnYvL1llZlBYQ2h6aTQvSFhVUnFxWVdRbWMrNmNYc09LZmY4UEFGeXlmaGhya1hBWGVUMngveVNpbGJVb3FJRW1nYXJ6MkRJVEl0REx0N1Fod0hlS2tWeEZEQUtZcE80clpTdmZoNUlabTdQblZ2Vkx5cHB2dDJsQURrZ3Jid1lzdnd2L2VoK2hkdXdsVkZRR2tHbW9wYWZ3SVZhZmhIekVHZ1hBakZFSjduZXFtc3VmVDhwUXNYTER0TGdxSkIzZEJjZzRxRXdLMm5ha09PczVJSTJHNEtiMG9ibld4TTU3RzVKTm5JWEQyYkd4LzZqcVNCU0FWaStFYzlycDBWUk0yM3YwNHFhQ09QTmxNbUk3cVo0cEh5Q3NOL3V0UHhHRlhWV1BlSlJkTHBXUWVibEtvVWtISU4zZDVDTUVVdTJsaVRJTTBMVU5QTERudkhIeTY3aHQwL09NOXN2a28rcnNISU5aYVlCTnZPL1F0bWtOazZrdlB4NmFIZjRPS3hBWjJCcXI4bWlBOEpOc1pzVnRORlo0MERlVFpLOHNEQVZMNUZCYWlWTXBURUM1VDdHaFJGaFdFbUFheXhUVGNvMm9RUlFDekxyZ0FINi8vQ3FlUFBRbHo3dmdabnI3akY3QU83NFU4VEJ4c3BwSDBLdEJNRCtKbWxzcWhST3FuWXNHZE4wbkRaMHpGc2U0WUlwWVkxL0U0VGxYRU1hK1lNWEVNNVlNSGtnbFVWOWRnNFpPL2tiNDhkTkR1MzcwWFZwVUh2WjBuRUtMbk13MVJkTzVyeGVXTFprTlI3OFdPbjkyQkVWVHJLVXNjZFp2d1VZM0V6QlRWa09vSVlXR1ZKU1kwL25PV2JqdndMVTUzVFJwb2sxU0FLUm9sWGV2ak04aUljZHBQcnNKbmYzZ0taOTE1RjdhdldZZldKLytBa1dJek9aYW5wQ0lhaDNrL1JsMmhHdWxqNUNkZGV3VVczWFliMm85M0lzUmF0alFodklVanlYOXRSay8xdWxua0plZlFYdnl5dTYrSEJWdUR1WTgvSW4xNStZMjJ3b2FacXd5aHdLaXdMTkhPQmE2OTVWY1kvZTR5ckhuak5Rd2NJOXNJVmNQUFZQZlFxeVhGQ1E0RVFndVZJYXdjTWxBY3dnaUdJYzRxZ21JeFlpRjhyVVJDNkZxekJmRTFhOUFicnNETVVXT2huTE1RbjU1NVBzNWNlaTYySjJKUUJsSlEvQ0c0V2creEJybU9FekdNK080WnVPaXBoNlZpVndaU2lseVlzc2tRRzllbHdlTXppdzhyejhpSWJRUExtVkFRMjNPbHZnRlV6SjZQT1U4OEpHMjQrVTdiVFVLdFYvc2RobDlOVWR1eGRpdG0vSHNycGwvN0k3VCs5SGJVK0VpMkdRVXgxQ0NUS2RoU1dTbUl0TlRGb0lQdGNvd1JSM0d5T0VNd3hZR01HTjRSWjVPRWVNMk5RTlRFU3pmK0RLNXdGZTZnODk1NTljOFlTOHAxOFR2TGNJYXBJU2IzNHE5WFhJL0NxbjRjUWhZalo4M0Z1YzgrTFJuczR5WDI1ckRrUnBGS3lNWCtLN25jamwySzdIRTdxU25jTFE0Mnhha29WK0ljc0pRNk90RDB3d3N3SjUrWDF0OTZsKzJMWlpHanB4V3lseHlKOWRiblhrRHp5NDlqM1l6cGlPN1pCYW1oRGxuRjR4dzNpMEVFZWd1Q1hCUjVQeWRTWWgrVnYxWlVDbXUreUZMZm1PeVRRZHZqb0ttYlFyaHozMzVjK3N0Zm9yZTJEdjN2ZllMYmx5K2o4dENjVGFkMXI2OUEvUDJQbUt4QWRPcDRYUFRxazFLb1ppU1M1S3RpNzFRV1d4V1VaRUtsK01SWWlrdHlwcXBnRDZhUHgxMGVJUkhLMk02N3hKRXE3STV1TkMzOUljYTBIWmEyL3U1NU8waFJhOVByb2FnZnUzZnR3UGxhQ08wUDNvMk5TNi9EQ0VxWkFBRkFsZWxSUXJUWVNoQzdGdUpiZDRhTXhMa0dEZVR6OG54eWtDTFhaanFSMDhETjF5bFN0T0ZUWm1EdTd4N0F5dy84M21GVi8zZjdmVGpyeHpmRG1EY0xtNTU5RHRrU1VFV0gzdlQ2cTFLcHVoclpJKzFVOVJUUmxqanlLVGw3dVhGZHBLWmVucE14bkFrbXNuMUdyeWltK2NRMEV3MndDQnB1cW9HaUhVZWhSOGFNVys2RXI1VG1RMTZDSEI1T0VwQkN0TElLKzk1OUR4Zjk4bjZvajZadytQbUhJV2RUTUdXS1R5S2JNRXA0VVJoRjV6bzdYaTRCT0h3ZE5NWEVJUHV2eW5SbCtuWjhHNE5NMVh2eld5OWczY2FET1B6c0s2Z05lTEQ2ejI5aTIyZXJVVEdHa2RxMW1WeDJIaTU4NnhVSk5hUGhhVHVDWWtDMElSTTZJNWNWVEorWlZhbDdLY1FMNVFOUUJ3bnM4cHlheEFJMW5YazFnVzhTMGt5WkVOUEoxZDhQZzBBMDlmNEhwYXprdDljLytnTHFhcXVRWSsvNDhMRUhzSC9YUmt5NTducnNFdU1sSWtWdDBpOUpETVNaenY2cG42UllqSGM1dTIrTUxtVW1rakxiaWUxbS9vcldsTVlwVjV5RDhWZjlISFZqNXVMcEd5NkNuZTZCcTc0SlVTNDQxcGRBYTlkR2pEdHZNZjducGFjbFUvRWplWGlmYzBTdHN1N3lZcFBZNDRMZkZYSzJUeENTK0V5Tm1NSytXNTYzL08rMDBORGNLTlVZYVphTkhHRTRURHJVVHg2cEsxRXN1dVhIa2w3TTJhMVB2d3Fqc1JZVmRTUFIvc0ZYaUk0WWh0R1VLZjFmYllTblZuRU9UOFdzaW10dzZraDhpVG8welBJd2tHYXd4c1Y1UHgwbkYzS0lwN0tZZk5aTTlCNDVoSEdCTVBZRlF4Z1FveUhrdm4wMFlNYlZTM0hWSXc5Sk9mYTlWSGNIZkI1dmVYaVFBRllld0hNNUk1UzJYUjVKRThZN2cwRGlqZjlBdURCT0xzOWNsbklwaGtOeXR1cGNMTm9BRjVKS1p0QVZVSERxM2JkTHhXTFdQcmJzZlJRaVh1aVZmaFRYN0VMVEpkOUIrOVlkOUZ5ZTZPVm5GbGdPZ0ltK0p6YVdiVWx5WnRJRXRLWjRYODNrL1lzRjlDUnppUFJuOGRuTHorUHpYejJPSVBVcGdsNllKOUxvWW4wdStQWC80SklINzVmaVIvckpDQXJPc1prWUVCVEdEUVZGMERLVHpFYU1WSW8yNURSNVJZeHUydjgxYnNoWVo2cUM4cWxBRHlwQkR4czRHUWZyMFNQbVEzbDVrWkIrK21PUFNoc0t1bjN3clEvZ2I2ekFnVzI3TVhINlNhaVpQeFA5WDZ4aTRRY2NaeGxjaEZXZW15c2pxZVZ5R3J4UExFWk1wVUJIMWZBR052Zkw4YzZUVHlPWDdvVzd0Z0hGL2hUaWZQYmkyMjZSenJ6OUJwdzQyZ0UxVjRKYkljRXVzRzhyUmNjSXA3UWthZEJJeXlIenFrdjV6eHlwRThHaEM0ZStoR2VLWWwrU0NDbkdLUE5VK1dLQkdyMnVVTklVMDFsblpHdnVrNDlLeFlKcTczem5kVlNIZldoYnZ3dlRmL0VUckdsdFJhWXZEaThkSWRMZG1Tb21EVFRZWGhSQjJ3UVhaWTJHL0Q0a09tSTRaZkYzc0gzWExpUmJqNktxdmdJRFhXbWt5Ti9PLyszZDBtay92b2EvNzRUR3RDdVF1ZVRTY1ZTNEF5aWF0cU1ZaGtyTG1YbmxUMUYzOG1ESlFVYTVCb2RDWEo3ZUs2ZW9vZHBJVXU5VkJBUFFTTWl6bENRNXdqREUvS2hRR2NrMEFxekp5VS9lSnlrUnI3MzNEMzlDc2UyQUkyaW5MMTJLemMrOWlKSTRReHgwbW8zQktBNTZXbXdWOXBKTU44K2RCbTNLZUh6MTI1ZFFRWjNZMFJWSGFNSlUzUEQwSTlLNHFTZWpxNjBOSGpwYkV1TXExSThxRWFxM05FQkdGWFdZaWpVSWtHSWFlQ2hRUXlQYTRyeEVFWVk1cWNtTEhVaDNDbGFHeGdWSVJORThEWE9KNlJReExzd1BpaWtRVVZPbXBNT2k3aElEc2dzZnZrOEt3V2V2ZStsbDdIanBOZmhiVG5MMll5d3hZU2lZRXUvcDBETlJKNUlBRnpaa29ROUp0Mzc0OG9OWTkvY3ZZQkJrVGpCZFI1eDZPaTc4NDFOU3RHRVllZzhmRXpCQTdjaXlLZVVoRVZnTXFnbHRNTnYwd1JaWGppSWRyN3JMYWVxME9kTkJWR1VJY1dSRitjOVFxVmlVbThLeXlPYkxOeUFKWmlMbU9lRnkwbGU4TnFuU3hWaVZuVXdod2U0NzVxbjdKYlBTWjIvNS9XK2dIOWlNUVBXSThvUytBSmJCcURtTVNaV2MrNGo1MEdMUWpYLzg4bWtjVzdzVEEreGlzKzY0QnBmY2VpKzdDM3Z5d2FQUXZHSWVUblkyaTdNa0hWcXVTSmJFUHVvTDBRamR1ZWRRbWc2bGFubW8xM0RBUmhoS2VjWUYyS2J6RGNlQWNzakZZYWJnakE1SHBYcTMrUUZWSExhSWthcENnYjFPUXBhOFR5RVA5T1ZJYmtsOFI5LytJOGxIa3I3cTEwL2FlbjhDZWFvUUg2K1BsRHpvb2VQU292WG80dGhieDRCSzNzdGVzdXJMejVHbHNQM1JvMDlJUzI2NERwM2RYVEFTQ1RFS0IwTU04b2h4TWxQc0NwQWY4M09LSm1aWnNpUU1IaWN6SEljUERobUoraHRLVTJzd3lzclFuTE5ML204dkZGUk5XQys4VS81VEE2dk1VWWRhQ1c5Q3JnSVhINTVLcDVpMmZtVGpjUVpMdzVTTGwwQUxCS1IvMzNxL0xYWUpYRnlRR0lnaUkwWlJOWENjUUZVc2NRRXBFMTJsSEtxblRzUk45OXdsTGJyd0FoeHRPNDRzd1NtcytXRzRaV2Z4WXNGaUV0a3diR2NOUXRwNXFmWEVWcU13WGhobG1RWHg5eEZPcVltQWlEV0x6NHAxSzBQRzJZUEZPdlQzRTBOTjFHblVnL1U1NUFCUlR5bmhTRWJBSHd3Nmt4bUtZQTBaSFgxV0RwVm5MY0JaZjN4QzJ2ak1LM2JYcHExSVo3dVJZTGIzVW5iMmtTbm5xT1RkMFRBV1hYVUpMcnZyTnNsZlc0UGR1MXVoa2tPS2llTTg3eS9tQWNSSlE3blh5WU5hc215QUFBOFJBTEhuSWw2TDliaHB1SEM4SUJLaTRUc1E2alQ2d1lXTFNJb3ZFVzZWNlNQeXVHeWtXZjVUQTNFQ0tCcnc0RisrMkZ5QW0ybHFzWVdJWGllaTdSeGM5cVRoS1FaUlBmczBMSDUxdkJUYnV3dUhObTIxTS9FTVJvdS9rdUZuRzhhMlNQTk9QeFVUSmsxQ1QzOGNYWWZJVENpMVNqWU5jczc0U3VnKzJ1bVFmMkh3VUc4ZTZuWGlOSFZJcEZ2T0RvRTV5SlRLUVNuYm9UaUErZjhCSE81UGNRZ1lWcGtBQUFBQVNVVk9SSzVDWUlJPSIvPgoJPC9kZWZzPgoJPHN0eWxlPgoJPC9zdHlsZT4KCTx1c2UgaWQ9IkJhY2tncm91bmQiIGhyZWY9IiNpbWcxIiB4PSIxMiIgeT0iNyIvPgo8L3N2Zz4='
+};
+
+// ═══════════════════════════════════════
+// EMBEDDED WEAPON SVG ICONS
+// ═══════════════════════════════════════
+const WEAPON_ICONS = {
+  'fa-hammer':     'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICA8cmVjdCB4PSI0MiIgeT0iMzAiIHdpZHRoPSIxNiIgaGVpZ2h0PSI1NSIgcng9IjYiIGZpbGw9IndoaXRlIi8+CiAgPHJlY3QgeD0iMjAiIHk9IjEwIiB3aWR0aD0iNjAiIGhlaWdodD0iMzAiIHJ4PSI4IiBmaWxsPSJ3aGl0ZSIvPgogIDxyZWN0IHg9IjU1IiB5PSIxMCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjEwIiByeD0iNCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjUpIi8+Cjwvc3ZnPg==',
+  'fa-crosshairs': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIzNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSI4Ii8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTIiIGZpbGw9IndoaXRlIi8+CiAgPGxpbmUgeDE9IjUwIiB5MT0iNSIgeDI9IjUwIiB5Mj0iMjUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGxpbmUgeDE9IjUwIiB5MT0iNzUiIHgyPSI1MCIgeTI9Ijk1IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSI1IiB5MT0iNTAiIHgyPSIyNSIgeTI9IjUwIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSI3NSIgeTE9IjUwIiB4Mj0iOTUiIHkyPSI1MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+',
+  'fa-skull':      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICA8ZWxsaXBzZSBjeD0iNTAiIGN5PSI0MiIgcng9IjMyIiByeT0iMzAiIGZpbGw9IndoaXRlIi8+CiAgPHJlY3QgeD0iMjgiIHk9IjYyIiB3aWR0aD0iNDQiIGhlaWdodD0iMjIiIHJ4PSI2IiBmaWxsPSJ3aGl0ZSIvPgogIDxyZWN0IHg9IjM0IiB5PSI2OCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMyIgZmlsbD0iIzJjM2U1MCIvPgogIDxyZWN0IHg9IjU2IiB5PSI2OCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMyIgZmlsbD0iIzJjM2U1MCIvPgogIDxlbGxpcHNlIGN4PSIzOCIgY3k9IjQwIiByeD0iMTAiIHJ5PSIxMSIgZmlsbD0iIzJjM2U1MCIvPgogIDxlbGxpcHNlIGN4PSI2MiIgY3k9IjQwIiByeD0iMTAiIHJ5PSIxMSIgZmlsbD0iIzJjM2U1MCIvPgo8L3N2Zz4=',
+  'fa-paw':        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICA8ZWxsaXBzZSBjeD0iNTAiIGN5PSI2NSIgcng9IjIyIiByeT0iMTgiIGZpbGw9IndoaXRlIi8+CiAgPGVsbGlwc2UgY3g9IjIyIiBjeT0iNTgiIHJ4PSIxMiIgcnk9IjE2IiBmaWxsPSJ3aGl0ZSIvPgogIDxlbGxpcHNlIGN4PSI3OCIgY3k9IjU4IiByeD0iMTIiIHJ5PSIxNiIgZmlsbD0id2hpdGUiLz4KICA8cGF0aCBkPSJNMzUgNDUgUTM4IDIwIDUwIDE4IFE2MiAyMCA2NSA0NSIgZmlsbD0id2hpdGUiIHN0cm9rZT0ibm9uZSIvPgogIDxwYXRoIGQ9Ik0xNSA0MiBRMTcgMjIgMjYgMjAgUTMyIDIyIDMzIDQwIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSJub25lIi8+CiAgPHBhdGggZD0iTTY3IDQwIFE2OCAyMiA3NCAyMCBRODMgMjIgODUgNDIiIGZpbGw9IndoaXRlIiBzdHJva2U9Im5vbmUiLz4KPC9zdmc+'
+,
+  'fa-stop': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAALFUlEQVR4nO1Za4xdV3X+vrX23ufcc+6dmTt3ZvyYGXs82CQmiRO3TaOSUiqgQIpQf1RUddoiVQX1RyUiEkHVwJ8WUTVFjdQizI9WQkQqfahBammAJEJKoSQQBSmoTpPiYFQCiRp77Bk/5nHPOXv1xzl3MvZcj8cmrdTKn7R159yz7t7fWnvt9dgDXMd1XMf/aXCrl3mWwswS732WJOFcjFaeWjjzv8VtW5CtXsYYYWbvrarq6XPnV997+szy/Pwb3pDuP3Dgf5zYgQMHsG9+vpWm6Q0A9l7TJCoCFTmiIibiK9XkR3mef9gp3j3e7fz09PQunZoaf91I7949hf379+rY2MitAO7K8/z3QwhnvHcPe++ufkLvPbz3R0TEVL2pBHOqpkJL0/C89/4+VX5odLR9MwDcdtst10TcKeAVbxLiniRJPpIk4bsAjKSpytLY2Mj7u93Rob/d8gx47wHgiJl9ARCYGYASZht/ahCRf62q+CxJizHCOayo4I87ndGlkdHu2NLS4q+trvZv7q/1UVYVRAQwQxUjSMJ7XxVF/xaSbyfrdcwIEgDshJkdInAh1gtvX4EGk0L+JSi/oiIWrSpjjApQ6gmIaDUREYFZBImC5DfKMq46lcx5vbUsYzdWESBhZiAJ8uLlSVZVVUWAnnQAKgjxIsnbDLhQluU26A7ZBe/9gyJiTvVZVT0Ygn/IKZcAnCR5QVWN5IYBq8/NhkFa7Yq1rJC1DGVNiAWnXBSR+0n+nIgsqjoTkXKk0/nY3Nyc9nq9qydfWwUg8aBzaiSfOnz4sGZZ0vZOJgCMZFnrHufcf5A8pqrHVOSYiLwgIoveOfPOmaqaU43O6asAniN5TESOCflcp9P58zzPZ1XQA5B4Lzu8l1OqNBFZDSEcAuqoNAxXPNpJ8ABsrSgjSE6/8MILbwHkiaKM5zudNgB8GiiOArU/GoDJycl2WZbv7/f77yTZB+BJrHnv/47El06eXCik2SqnGsd37KhWlpfx8ssvoygiAEAEIAxF0a+EwPHjx69tByYmeuj1xt/inTuhIgbg6LXNdGXceOM8Op38t0TkAklzKv8cFFNef/K5SeAJp2oiOCpbpr8aO3dMYPeuqT1Z8Pd75QO7dkzOXSlipGmiIfinVNW0Pi9HVF8H9iEEOueeENJCcI/u2TM9vWvX1GY575GEICTHADzknHzLKS8IWYTgvwPgA3feeSdw+einJJ9yzhlJA3DkJyafZRmyLMtJfhOAqWqRpuFImoZ1Ga8K75wK2fHOfUxEXvTeF86pibBOfvU4CeA7AA4DyC82kiIEHfXePaNN1CLwwcF7G5IDtq1DCOGzInX4c6qVqt59ydZOq8gvi8iPSS4DbLKomlNnQmkyuJhTjSTPkfwigIMA2hsUuFeEK6pqImJO5HQWwm/0xru7xrtjV8c6CUA7QyqCT5I0EW+kX8qz7NO7d+/ct3PnFGZnp/HGN+5viciXVKQmLc6EwUhvTutPMjSliNi6nGpFoCDxUQCeJNSJJ3BUyJKAKWBeGNtZ63PtrLV98mNjI5idndF23rpXBGW9qK4B/uNAsu6/s7PTmJ/fO6EqX5M6QhkgJlQDXhtCNVLXkxmbTxGaqiyqczMbdjQn8JCSpqQ5pQnwj9uIG68hhIAkTfLg/ffZZEwVeQBAcqmsCCCCh1Vrv62V2DwG81ysgFiWZY/3er3x0dG6WHP12OGILwphzjlTkR/mWfqurJVu4jpUsVj1UZVrqGIxqFeqGOMjJNculTVrRjRseczMEM0QY52oBrWQiHx+YWHh9MjICACgBJC38/9qt/MHnXPHY13wza6uFXesrK5hfn7uygpUEagqoFkL0ezPDHhqWCQYKBDNQKCuNIfxxyWRpFGmqqoPdcfGJhcXF9dfTe2awn33/96TZngWVhtGVW7ct2/P+PLy8lZmwkbr5CQGLvRh3Tp7PexUL+s+G8fgEKNxK5KLJGcurUwbfGHgciH4qp233p1fcpiH1kKqdS1uRlSVoYrxIIAOgHNbaSHkZksPjNIYJppBSETUHZ9t6Asukh88N/Kq8jJFzlzqp0PNWpYRRRFRVet1+wdU5aeG7YJKPQY9wWXLhaZfEKn7gYELGWq3u1SBpp2tXZJEv1/+zdmz5789NXVxBTB0B1qtFCpiRVmeKYoCIsoY+TtmeAbQC0AxhB8RY20eaSw7IFUTBqKx6bQi0LyPZpt2zNUh9a0w3mEWISSqWJ3TZuc2YugO5FkLn/rEfcsq8idmKKw+oHfnefKnu3f35ODBg5t+Y1YrIQ1ponGphpyowqx+FgrYWBbYxAllVR2qYvysWZx3qhDhqc5I+/lOJ79U9Iq4geQpaTKsc/758fHuYVWEJNHGWoBTfF6E5pwzNocTzYEdlBDCegAwETHvvZG0NE0+MTOzK+n1urj99tsIYo7kd52qBefMi5gn/2F+/97WzOyuq2PfuMD7AJxpirFSVc57L3d7L+sKeMcJ7+WrJH+EuuBbJ64i60rVmVfNqRiAJe/csXbe+nnvFDt3TmHHjomfVZVnB62nkuaArztg8houVS7C74rIWVVnzjkTkd8exPsQFGnqBsr8gnN6fJBlN9Q99TNhQlRO8U0AH89aqbbzFvOshW53FN3u6G86p6ebNcyJPO2AuSY7XztCEKq6J0hnSZL8uNPpvKPdbm+S6/V66PV6b02S5DPOuQuyQQEVWnBiQeWfFJgYRkhEVFWbfsAZ4I8Afktu21Ks348AIkgPM/naHXf8zNd/8IMf4vz58xfJLSwsIMuyf/Hef4vkt1dXV+8SkV+v3/J76txRFf2yGU5dWFkZslITtaKBVAwia9x0zK8CaRqQpuGDAxcC5Oj2rpMAADN53vpIu50/qapvGx3rbCk82h2RPG/9tRc1R2+t0Hp6tNOZ6eSbd3vbECFE5MGBX3rnPuXd9jzylkM34KabDiQTk93dY90RHe8Nvx7ciE6e3ewhZxzUgobV1IebEhcuK39FJiqvdV5m9kyM8Y9kSN0yNTUJVc0WFxdnVlZWPQA892/fg4hYVUUzWBeoS/WiqKvcLMvQ6XReeuWVV87e9Z734PFHvoyV5eWTACsAiFWBWG3dSm6pQLudQ1QmVy6szJdVhIhg7969duLECeZZ6839oj9WFPUKr756ssxaya1lGe8TkR5sQ35lfQVpTfkgzW1ZURQ8u7T0GZKPPf7oo8hGOkVZlv/ZX1uzaIZBi3TNSNMErTQ9UleazkJIX03T9AHn3D1pEl7SOp6vNyhk/bdzzlwTOgfXjRvD6sZ3g++dqrVarX4I4XOqeo6kOUrZzlr3Ts/t1rGxkatXQOrS4AhR98SqwQZXHrLhLtSprmfWOuENwqeYCpq70ob4BoUGz4O708E5GyjnKJZ6//0sTfJWGH4OLutCIbTQ768AgAJNOYw6xIkAMVpU0coAhhBejGafrKpqAesJvK44RQCrAIohVnX1WX8vFkLo9ou1PyhLvklEKjNTkmL1f4ZgJMqihBV22bh3WQXMIkJI5y3GPyyriBgBUZQGWbJIy7Pkb6uy/KuiLEvn/XLebr9UFkV58uTJ9Tkqq7s7AIhlo1SDt/3SLyKEII995bEnAWkD7AfPj5ZF+b4IK1xthBGKSBKCJmnA6cWly9EdBgLATSTXSL6iov+eJMnfq4ZJIPQmxidab779EPbtmb2aSS+Ldp6hnWd5UJnwRM8TY8H5v/Ai39gx2Zubnb7KQq7BHuf0kTxr/aqZIU1Tl2XZ60L4Skh8QOKDehG/c2qCszPXpsB1XMf/d/w3BjlCkuRT9zEAAAAASUVORK5CYII='
+};
+
+// ═══════════════════════════════════════
+// EMBEDDED ARROW SVGs
+// ═══════════════════════════════════════
+const ARROW_SVG = {
+  down: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEsAAABGCAYAAACE0Gk0AAABGUlEQVR4nO3bUQqDQAxF0Tel+99y+1NBZKqGYvJi71nBcEnGIlYCAAAAAAD38fqoPockjeoDzGzjjDEszvmoPsCWayjJaLJmq+YUSjKZLJc76Uh5rG+h3KZKKo7VKZRUGKvL6q2VxNoL5TpVUkGsjhO1SI11FMp5qiSDp2EnabE6r9/CZrLcV1BKinWHqZKMJqsDYgVcHusuKygxWSHECiBWALECiBVArACbWB1+YtjE6oBYAcQKsIrlfm9ZxZpxCnh5rOhLvXUcp1CS9Kw+wIxbpIX9GjpJidXh/foZTFZAWqxfpsvlDmOyAlJjdb+70ierczDWMIBPjgKsPjlyx1c0AeWX7dmIDg+G8gPscf63BQAAAADgP70BzZBsJ0GRWBUAAAAASUVORK5CYII=',
+  up:   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAAA8CAYAAADMtVzqAAABEklEQVR4nO3YUY7DIBAE0Sb3vzP5Qoqi3cgYmOmxqk4AT2ODLRERERERERE9uN57z17DK3sBVxtY2WhlwD7LRCsB9hdQFpo92C+YDDRrsCsg0WjWYI7Zgs1MTuSUWYLdAYhCswNb2XgEmh3YaqfRrMB2bfYkmg1Y9ifP1Vr2Av5rFrC1FrIXmwlbKQpLeghYZIBNZgnmfABYgjlnB+Z6Oo7swNyzAnN+d42swGaLfhwlI7AK0yWZgN3BypguyQCsymSNUsHuYmVNl5QIVhFLSvi9s/IIZmNJwRNWHUsKmrDVF7sLlnQYbMcJ6IQlHQDbeU1ww5IWwE7enxyhRssLe/pEfbd1gZU+cYiIiIiIiIiiegNKOpPn1K8bCgAAAABJRU5ErkJggg=='
+}
+
+// ═══════════════════════════════════════
+// STATE ARRAYS (CRITICAL)
+// ═══════════════════════════════════════
+const behaviorQueue = [];
+const abilitiesQueue = [
+  { text: '[action] VOLATILE DETONATION: If a hero\'s attack scores any critical hits on this enemy, inflict 1 damage on each hero next to this enemy.', icon: '' }
+];
+
+// Image states
+const bgState   = { url: null, x: 50, y: 50, scale: 100, alpha: 1.0 };
+const charState = { x: 50, y: 0,  scale: 100, alpha: 1.0 };
+const iconState = { x: 2,  y: 2,  size: 50,   alpha: 1.0 };
+const sectionBgState = {
+  left:   { url: null, x: 50, y: 50, scale: 100, alpha: 1.0, hasColor: true },
+  center: { url: null, x: 50, y: 50, scale: 100, alpha: 0.9, hasColor: true },
+  right:  { url: null, x: 50, y: 50, scale: 100, alpha: 1.0, hasColor: true }
+};
+
+// ═══════════════════════════════════════
+// ELEMENT REFERENCES
+// ═══════════════════════════════════════
+const cardElement   = document.getElementById('cardElement');
+const charImgDisplay = document.getElementById('charImgDisplay');
+const iconDisplay   = document.getElementById('iconDisplay');
+const colArt        = document.getElementById('colArt');
+const colInfo       = document.getElementById('colInfo');
+const colBehavior   = document.getElementById('displayBehavior');
+
+const textSizeRange     = document.getElementById('textSizeRange');
+const tokenSizeRange    = document.getElementById('tokenSizeRange');
+const tokenSizeContainer = document.getElementById('tokenSizeContainer');
+const healthSizeRange   = document.getElementById('healthSizeRange');
+const nameSizeRange     = document.getElementById('nameSizeRange');
+
+const inputs = {
+  name:   document.getElementById('unitName'),
+  move:   document.getElementById('statMove'),
+  def:    document.getElementById('statDef'),
+  health: document.getElementById('statHealth'),
+  group:  document.getElementById('statGroup'),
+  wRange: document.getElementById('wRange'),
+  wDice:  document.getElementById('wDice'),
+  wHit:   document.getElementById('wHit'),
+  wCrit:  document.getElementById('wCrit'),
+  wIcon:  document.getElementById('wIcon')
+};
+
+const displays = {
+  name:        document.getElementById('displayUnitName'),
+  move:        document.getElementById('displayMove'),
+  def:         document.getElementById('displayDef'),
+  health:      document.getElementById('displayHealth'),
+  group:       document.getElementById('displayGroup'),
+  wRange:      document.getElementById('displayWRange'),
+  wDice:       document.getElementById('displayWDice'),
+  wHit:        document.getElementById('displayWHit'),
+  wCrit:       document.getElementById('displayWCrit'),
+  wIcon:       document.getElementById('displayWIcon'),
+  abilities:   document.getElementById('displayAbilities'),
+  healthTrack: document.getElementById('displayHealthTrack'),
+  behavior:    document.getElementById('displayBehavior')
+};
+
+// ═══════════════════════════════════════
+// UTILITY: hexToRgba
+// ═══════════════════════════════════════
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ═══════════════════════════════════════
+// UTILITY: readFile (FileReader wrapper)
+// ═══════════════════════════════════════
+function readFile(input, cb) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => cb(e.target.result);
+  reader.readAsDataURL(file);
+}
+
+// ═══════════════════════════════════════
+// UTILITY: wireNudge
+// Wires a range slider + optional ± nudge buttons + value display span.
+// onChange(newValue) called every change.
+// unit: '%', 'px', or '' (for decimals like alpha)
+// ═══════════════════════════════════════
+function wireNudge(sliderId, minId, plusId, valId, nudgeStep, unit, onChange) {
+  const sl = document.getElementById(sliderId);
+  const sp = document.getElementById(valId);
+  const bm = minId  ? document.getElementById(minId)  : null;
+  const bp = plusId ? document.getElementById(plusId) : null;
+
+  function fmt(v) {
+    if (unit === '%')  return v + '%';
+    if (unit === 'px') return v + 'px';
+    return parseFloat(v).toFixed(2);
+  }
+
+  function apply(v) {
+    const clamped = Math.max(parseFloat(sl.min), Math.min(parseFloat(sl.max), parseFloat(v)));
+    sl.value = clamped;
+    sp.textContent = fmt(clamped);
+    onChange(clamped);
+  }
+
+  sl.addEventListener('input', () => apply(sl.value));
+  if (bm) bm.addEventListener('click', () => apply(parseFloat(sl.value) - nudgeStep));
+  if (bp) bp.addEventListener('click', () => apply(parseFloat(sl.value) + nudgeStep));
+
+  // Initialise display
+  sp.textContent = fmt(parseFloat(sl.value));
+}
+
+// ═══════════════════════════════════════
+// 1. CARD BACKGROUND
+// ═══════════════════════════════════════
+function applyCardBg() {
+  if (bgState.url) {
+    cardElement.style.backgroundImage    = `url('${bgState.url}')`;
+    cardElement.style.backgroundSize     = `${bgState.scale}%`;
+    cardElement.style.backgroundPosition = `${bgState.x}% ${bgState.y}%`;
+    cardElement.style.opacity            = '1';
+    // Use a pseudo-overlay trick: wrap opacity only on bg via gradient
+    // Actually simplest: just set opacity of the overlay element if it exists
+    // Since card children must remain visible, we use a wrapper approach:
+    // We store alpha on a data attribute and handle via CSS filter is not ideal.
+    // Best approach: use a dedicated bg overlay div inside the card
+    const ov = document.getElementById('bgOverlay');
+    if (ov) {
+      ov.style.backgroundImage    = `url('${bgState.url}')`;
+      ov.style.backgroundSize     = `${bgState.scale}%`;
+      ov.style.backgroundPosition = `${bgState.x}% ${bgState.y}%`;
+      ov.style.opacity            = bgState.alpha;
+      cardElement.style.backgroundImage = 'none';
+    } else {
+      cardElement.style.backgroundImage    = `url('${bgState.url}')`;
+      cardElement.style.backgroundSize     = `${bgState.scale}%`;
+      cardElement.style.backgroundPosition = `${bgState.x}% ${bgState.y}%`;
+    }
+  } else {
+    const ov = document.getElementById('bgOverlay');
+    if (ov) { ov.style.backgroundImage = 'none'; ov.style.opacity = '0'; }
+    cardElement.style.backgroundImage = 'none';
+  }
+}
+
+document.getElementById('bgUpload').addEventListener('change', function() {
+  readFile(this, url => { bgState.url = url; applyCardBg(); });
+});
+document.getElementById('bgClear').addEventListener('click', () => {
+  bgState.url = null;
+  document.getElementById('bgUpload').value = '';
+  applyCardBg();
+});
+wireNudge('bgPX','bgXm','bgXp','bgPXv', 1, '%',  v => { bgState.x     = v; applyCardBg(); });
+wireNudge('bgPY','bgYm','bgYp','bgPYv', 1, '%',  v => { bgState.y     = v; applyCardBg(); });
+wireNudge('bgSC','bgSm','bgSp','bgSCv', 5, '%',  v => { bgState.scale = v; applyCardBg(); });
+wireNudge('bgAL', null, null, 'bgALv', 0.05, '', v => { bgState.alpha = v; applyCardBg(); });
+
+// ═══════════════════════════════════════
+// 2. CHARACTER ART
+// ═══════════════════════════════════════
+function applyCharTransform() {
+  charImgDisplay.style.left      = `${charState.x}%`;
+  charImgDisplay.style.bottom    = `${charState.y}px`;
+  charImgDisplay.style.transform = `translateX(-50%) scale(${charState.scale / 100})`;
+  charImgDisplay.style.opacity   = charState.alpha;
+}
+
+document.getElementById('charUpload').addEventListener('change', function() {
+  readFile(this, url => { charImgDisplay.src = url; });
+});
+
+wireNudge('chPX','chXm','chXp','chPXv', 1,  '%',  v => { charState.x     = v; applyCharTransform(); });
+wireNudge('chPY','chYm','chYp','chPYv', 5,  'px', v => { charState.y     = v; applyCharTransform(); });
+wireNudge('chSC','chSm','chSp','chSCv', 5,  '%',  v => { charState.scale = v; applyCharTransform(); });
+wireNudge('chAL', null, null, 'chALv', 0.05, '', v => { charState.alpha = v; applyCharTransform(); });
+
+// Legacy nudge buttons (fine-tune shortcuts, keep in sync)
+document.getElementById('artLeft') .addEventListener('click', () => {
+  const sl = document.getElementById('chPX');
+  charState.x = Math.max(0, charState.x - 2.5);
+  sl.value = charState.x;
+  document.getElementById('chPXv').textContent = charState.x.toFixed(1) + '%';
+  applyCharTransform();
+});
+document.getElementById('artRight').addEventListener('click', () => {
+  const sl = document.getElementById('chPX');
+  charState.x = Math.min(100, charState.x + 2.5);
+  sl.value = charState.x;
+  document.getElementById('chPXv').textContent = charState.x.toFixed(1) + '%';
+  applyCharTransform();
+});
+document.getElementById('artUp').addEventListener('click', () => {
+  const sl = document.getElementById('chPY');
+  charState.y = charState.y + 10;
+  sl.value = Math.min(300, charState.y);
+  document.getElementById('chPYv').textContent = charState.y + 'px';
+  applyCharTransform();
+});
+document.getElementById('artDown').addEventListener('click', () => {
+  const sl = document.getElementById('chPY');
+  charState.y = charState.y - 10;
+  sl.value = Math.max(-300, charState.y);
+  document.getElementById('chPYv').textContent = charState.y + 'px';
+  applyCharTransform();
+});
+document.getElementById('artZoomIn').addEventListener('click', () => {
+  const sl = document.getElementById('chSC');
+  charState.scale = Math.min(300, charState.scale + 5);
+  sl.value = charState.scale;
+  document.getElementById('chSCv').textContent = charState.scale + '%';
+  applyCharTransform();
+});
+document.getElementById('artZoomOut').addEventListener('click', () => {
+  const sl = document.getElementById('chSC');
+  charState.scale = Math.max(10, charState.scale - 5);
+  sl.value = charState.scale;
+  document.getElementById('chSCv').textContent = charState.scale + '%';
+  applyCharTransform();
+});
+
+// ═══════════════════════════════════════
+// 3. CARD ICON
+// ═══════════════════════════════════════
+function applyIconTransform() {
+  iconDisplay.style.left    = `${iconState.x}%`;
+  iconDisplay.style.top     = `${iconState.y}%`;
+  iconDisplay.style.bottom  = 'auto';
+  iconDisplay.style.width   = `${iconState.size}px`;
+  iconDisplay.style.height  = 'auto';
+  iconDisplay.style.opacity = iconState.alpha;
+}
+
+document.getElementById('iconUpload').addEventListener('change', function() {
+  readFile(this, url => {
+    iconDisplay.src = url;
+    iconDisplay.style.display = 'block';
+    applyIconTransform();
+  });
+});
+
+wireNudge('icPX','icXm','icXp','icPXv', 1,  '%',  v => { iconState.x    = v; applyIconTransform(); });
+wireNudge('icPY','icYm','icYp','icPYv', 1,  '%',  v => { iconState.y    = v; applyIconTransform(); });
+wireNudge('icSZ','icSm','icSp','icSZv', 2,  'px', v => { iconState.size = v; applyIconTransform(); });
+wireNudge('icAL', null, null, 'icALv', 0.05, '', v => { iconState.alpha = v; applyIconTransform(); });
+
+// ═══════════════════════════════════════
+// 4. SECTION BACKGROUNDS
+// ═══════════════════════════════════════
+function applySecBg(key, el, colorInputId) {
+  const st = sectionBgState[key];
+  const colorInput = document.getElementById(colorInputId);
+  
+  // Apply solid background color to element (only if hasColor is true)
+  if (st.hasColor) {
+    el.style.backgroundColor = colorInput.value;
+  } else {
+    el.style.backgroundColor = '';
+  }
+  
+  // Apply image and opacity to ::before pseudo-element via CSS variable
+  if (st.url) {
+    el.style.setProperty('--bg-image', `url('${st.url}')`);
+    el.style.setProperty('--bg-size', `${st.scale}%`);
+    el.style.setProperty('--bg-position', `${st.x}% ${st.y}%`);
+    el.style.setProperty('--bg-opacity', st.alpha);
+  } else {
+    el.style.setProperty('--bg-image', 'none');
+    el.style.setProperty('--bg-opacity', '0');
+  }
+}
+
+function wireSecBg(key, prefix, uploadId, colorId, clearId, el) {
+  document.getElementById(uploadId).addEventListener('change', function() {
+    readFile(this, url => { sectionBgState[key].url = url; applySecBg(key, el, colorId); });
+  });
+  document.getElementById(colorId).addEventListener('input', () => {
+    sectionBgState[key].hasColor = true;
+    applySecBg(key, el, colorId);
+  });
+  document.getElementById(clearId).addEventListener('click', () => {
+    // Clear both image and color
+    sectionBgState[key].url = null;
+    sectionBgState[key].hasColor = false;
+    document.getElementById(uploadId).value = '';
+    applySecBg(key, el, colorId);
+  });
+  wireNudge(prefix+'PX', prefix+'Xm', prefix+'Xp', prefix+'PXv', 1,  '%', v => { sectionBgState[key].x     = v; applySecBg(key, el, colorId); });
+  wireNudge(prefix+'PY', prefix+'Ym', prefix+'Yp', prefix+'PYv', 1,  '%', v => { sectionBgState[key].y     = v; applySecBg(key, el, colorId); });
+  wireNudge(prefix+'SC', prefix+'Sm', prefix+'Sp', prefix+'SCv', 5,  '%', v => { sectionBgState[key].scale = v; applySecBg(key, el, colorId); });
+  wireNudge(prefix+'AL', null, null,  prefix+'ALv', 0.05, '',    v => { sectionBgState[key].alpha = v; applySecBg(key, el, colorId); });
+}
+
+wireSecBg('left',   'lb', 'leftBgUpload',   'leftBgColor',   'clearLeftBg',   colArt);
+wireSecBg('center', 'cb', 'centerBgUpload', 'centerBgColor', 'clearCenterBg', colInfo);
+wireSecBg('right',  'rb', 'rightBgUpload',  'rightBgColor',  'clearRightBg',  colBehavior);
+
+// ═══════════════════════════════════════
+// 5. SECTION WIDTHS
+// ═══════════════════════════════════════
+function updateWidths() {
+  const l = document.getElementById('leftWidth').value;
+  const c = document.getElementById('centerWidth').value;
+  const r = document.getElementById('rightWidth').value;
+  cardElement.style.gridTemplateColumns = `${l}% ${c}% ${r}%`;
+  document.getElementById('leftWidthVal').textContent   = l;
+  document.getElementById('centerWidthVal').textContent = c;
+  document.getElementById('rightWidthVal').textContent  = r;
+}
+document.getElementById('leftWidth').addEventListener('input', updateWidths);
+document.getElementById('centerWidth').addEventListener('input', updateWidths);
+document.getElementById('rightWidth').addEventListener('input', updateWidths);
+
+// ═══════════════════════════════════════
+// 6. SIZE SLIDERS (text, token, health)
+// ═══════════════════════════════════════
+textSizeRange.addEventListener('input', e => {
+  displays.abilities.style.fontSize = `${e.target.value}rem`;
+  renderAbilitiesCard();
+});
+tokenSizeRange.addEventListener('input', e => {
+  document.documentElement.style.setProperty('--token-size', `${e.target.value}px`);
+});
+healthSizeRange.addEventListener('input', e => {
+  document.documentElement.style.setProperty('--health-size', `${e.target.value}px`);
+});
+nameSizeRange.addEventListener('input', updateCard);
+
+// ═══════════════════════════════════════
+// 7. CARD CONTENT  (updateCard)
+// ═══════════════════════════════════════
+function updateCard() {
+  // Name
+  displays.name.textContent = inputs.name.value;
+  let sz = parseFloat(nameSizeRange.value);
+  displays.name.style.fontSize   = `${sz}rem`;
+  displays.name.style.lineHeight = '1';
+  while (sz > 0.5) {
+    const px = parseFloat(window.getComputedStyle(displays.name).fontSize);
+    if (displays.name.scrollHeight > px * 2.5 || displays.name.scrollWidth > displays.name.clientWidth) {
+      sz -= 0.1;
+      displays.name.style.fontSize = `${sz}rem`;
+    } else break;
+  }
+
+  // Stats
+  displays.move.textContent  = inputs.move.value;
+  displays.def.textContent   = inputs.def.value;
+  displays.group.textContent = inputs.group.value;
+
+  // Health
+  const hp = parseInt(inputs.health.value);
+  displays.health.textContent = (hp <= 0) ? 1 : hp;
+  let track = '';
+  if (hp === -1) {
+    track = '';
+  } else if (hp === 0) {
+    track = '<div class="health-node skull"><i class="fas fa-skull"></i></div>';
+  } else {
+   for (let i = hp; i >= 1; i--) track += `<div class="health-node">${i}</div>`;
+    track += '<div class="health-node skull"><i class="fas fa-skull"></i></div>';
+  }
+  displays.healthTrack.innerHTML = track;
+
+  // Weapon
+  displays.wRange.textContent = inputs.wRange.value;
+  displays.wDice.textContent  = inputs.wDice.value;
+  displays.wHit.textContent   = inputs.wHit.value;
+  displays.wCrit.textContent  = inputs.wCrit.value;
+  displays.wIcon.src          = WEAPON_ICONS[inputs.wIcon.value] || WEAPON_ICONS['fa-hammer'];
+
+  // Abilities
+  renderAbilitiesCard();
+}
+
+// Attach listeners to all stat/text inputs
+Object.values(inputs).forEach(el => {
+  el.addEventListener('input',  updateCard);
+  el.addEventListener('change', updateCard);
+});
+
+// ═══════════════════════════════════════
+// 8. ABILITIES SYSTEM
+// ═══════════════════════════════════════
+function parseAbilityLine(line) {
+  if (line.trim() === '') return null;
+  let out = line;
+  out = out.replace(/\[action\]/gi, '<span class="trigger-icon"><i class="fas fa-stop"></i></span>');
+  out = out.replace(/\[O\]/g, '<div class="token-circle"></div>');
+  out = out.replace(/\[b\](.*?)\[\/b\]/g, '<span class="ability-name">$1</span>');
+  // Also support legacy <b>...</b>
+  out = out.replace(/<b>(.*?)<\/b>/g, '<span class="ability-name">$1</span>');
+  return out;
+}
+
+function renderAbilitiesCard() {
+  const container = displays.abilities;
+  container.innerHTML = '';
+  // Token visibility
+  const allText = abilitiesQueue.map(a => typeof a === 'string' ? a : a.text).join('\n');
+  if (allText.includes('[O]')) {
+    tokenSizeContainer.classList.remove('hidden');
+  } else {
+    tokenSizeContainer.classList.add('hidden');
+  }
+  abilitiesQueue.forEach(abilityData => {
+    const ability = typeof abilityData === 'string' ? abilityData : abilityData.text;
+    const icon = typeof abilityData === 'object' ? abilityData.icon : '';
+    const lines = ability.split('\n');
+    lines.forEach(line => {
+      const parsed = parseAbilityLine(line);
+      if (parsed === null) return;
+      const block = document.createElement('div');
+      block.className = 'ability-block';
+      
+      // Add icon before ability text if present
+      if (icon && WEAPON_ICONS[icon]) {
+        const iconImg = document.createElement('img');
+        iconImg.src = WEAPON_ICONS[icon];
+        if (icon === 'fa-stop') {
+          // Action icon - no brightness filter
+          iconImg.style.cssText = 'width:24px;height:24px;vertical-align:middle;margin-right:6px;display:inline-block;';
+        } else {
+          // Regular weapon icons - apply brightness filter
+          iconImg.style.cssText = 'width:20px;height:20px;vertical-align:middle;margin-right:6px;filter:brightness(0);display:inline-block;';
+        }
+        block.appendChild(iconImg);
+      }
+      
+      const isOnlyTokens = /^(\s*<div class="token-circle"><\/div>\s*)+$/.test(parsed);
+      if (isOnlyTokens) block.style.textAlign = 'center';
+      
+      const textSpan = document.createElement('span');
+      textSpan.innerHTML = parsed;
+      block.appendChild(textSpan);
+      
+      container.appendChild(block);
+    });
+  });
+}
+
+function renderAbilitiesEditor() {
+  const list = document.getElementById('abilitiesList');
+  list.innerHTML = '';
+  abilitiesQueue.forEach((abilityData, idx) => {
+    const text = typeof abilityData === 'string' ? abilityData : abilityData.text;
+    const icon = typeof abilityData === 'object' ? abilityData.icon : '';
+    
+    const item = document.createElement('div');
+    item.className = 'ability-editor-item';
+
+    const header = document.createElement('div');
+    header.className = 'ability-editor-header';
+    const lbl = document.createElement('span');
+    lbl.textContent = `Ability ${idx + 1}`;
+    const rmBtn = document.createElement('button');
+    rmBtn.textContent = '✕ Remove';
+    rmBtn.addEventListener('click', () => {
+      abilitiesQueue.splice(idx, 1);
+      renderAbilitiesEditor();
+      renderAbilitiesCard();
+    });
+    header.appendChild(lbl);
+    header.appendChild(rmBtn);
+
+    // Icon dropdown
+    const iconRow = document.createElement('div');
+    iconRow.style.cssText = 'margin-bottom:8px;';
+    const iconLabel = document.createElement('label');
+    iconLabel.textContent = 'Icon: ';
+    iconLabel.style.cssText = 'margin-right:8px;font-size:0.85rem;';
+    const iconSelect = document.createElement('select');
+    iconSelect.innerHTML = `
+      <option value="">None</option>
+      <option value="fa-hammer">Melee (Hammer)</option>
+      <option value="fa-crosshairs">Ranged (Crosshair)</option>
+      <option value="fa-skull">Magic (Skull)</option>
+      <option value="fa-paw">Beast (Claw)</option>
+      <option value="fa-stop">Action</option>
+    `;
+    iconSelect.value = icon;
+    iconSelect.addEventListener('change', () => {
+      if (typeof abilitiesQueue[idx] === 'string') {
+        abilitiesQueue[idx] = { text: abilitiesQueue[idx], icon: iconSelect.value };
+      } else {
+        abilitiesQueue[idx].icon = iconSelect.value;
+      }
+      renderAbilitiesCard();
+    });
+    iconRow.appendChild(iconLabel);
+    iconRow.appendChild(iconSelect);
+
+    const ta = document.createElement('textarea');
+    ta.rows = 3;
+    ta.value = text;
+    ta.placeholder = '[action] Ability Name: Description...';
+    ta.addEventListener('input', () => {
+      if (typeof abilitiesQueue[idx] === 'string') {
+        abilitiesQueue[idx] = { text: ta.value, icon: icon };
+      } else {
+        abilitiesQueue[idx].text = ta.value;
+      }
+      renderAbilitiesCard();
+    });
+
+    item.appendChild(header);
+    item.appendChild(iconRow);
+    item.appendChild(ta);
+    list.appendChild(item);
+  });
+}
+
+document.getElementById('addAbilityBtn').addEventListener('click', () => {
+  abilitiesQueue.push({ text: '', icon: '' });
+  renderAbilitiesEditor();
+  renderAbilitiesCard();
+  // Focus last textarea
+  const tas = document.querySelectorAll('#abilitiesList textarea');
+  if (tas.length) tas[tas.length - 1].focus();
+});
+
+// ═══════════════════════════════════════
+// 9. BEHAVIOR LOOP
+// ═══════════════════════════════════════
+const behaviorTypeSelect  = document.getElementById('behaviorType');
+const behaviorTextInput   = document.getElementById('behaviorTextInput');
+const behaviorListEl      = document.getElementById('behaviorList');
+
+behaviorTypeSelect.addEventListener('change', () => {
+  if (behaviorTypeSelect.value === 'text') {
+    behaviorTextInput.classList.remove('hidden');
+  } else {
+    behaviorTextInput.classList.add('hidden');
+  }
+});
+
+document.getElementById('addBehaviorBtn').addEventListener('click', () => {
+  if (behaviorQueue.length >= 10) { alert('Max 10 behavior slots.'); return; }
+  const type = behaviorTypeSelect.value;
+  const data = { type, text: '' };
+  if (type === 'text') {
+    if (!behaviorTextInput.value.trim()) { alert('Please enter text for the slot.'); return; }
+    data.text = behaviorTextInput.value.trim();
+    behaviorTextInput.value = '';
+  }
+  behaviorQueue.push(data);
+  renderBehaviorList();
+  renderBehaviorCard();
+});
+
+function removeBehavior(index) {
+  behaviorQueue.splice(index, 1);
+  renderBehaviorList();
+  renderBehaviorCard();
+}
+
+function renderBehaviorList() {
+  behaviorListEl.innerHTML = '';
+  behaviorQueue.forEach((item, idx) => {
+    const li = document.createElement('li');
+    li.className = 'behavior-item';
+    let lbl = item.type.charAt(0).toUpperCase() + item.type.slice(1).replace('_', ' ');
+    if (item.type === 'text') lbl = `Text: "${item.text.substring(0, 12)}..."`;
+    li.innerHTML = `<span>${lbl}</span>
+      <button class="btn btn-burgundy" style="width:auto;margin:0;padding:2px 6px;"
+        onclick="removeBehavior(${idx})">✕</button>`;
+    behaviorListEl.appendChild(li);
+  });
+}
+
+function renderBehaviorCard() {
+  const container = displays.behavior;
+  container.innerHTML = '';
+  
+  let arrowGroup = [];
+  
+  behaviorQueue.forEach((item, idx) => {
+    // ARROWS: collect consecutive arrows for horizontal display
+    if (item.type === 'arrow_down' || item.type === 'arrow_up') {
+      arrowGroup.push(item);
+      
+      // If next item is not an arrow, or this is the last item, render the group
+      const nextItem = behaviorQueue[idx + 1];
+      const isLastItem = idx === behaviorQueue.length - 1;
+      const nextIsNotArrow = !nextItem || (nextItem.type !== 'arrow_down' && nextItem.type !== 'arrow_up');
+      
+      if (isLastItem || nextIsNotArrow) {
+        // Render arrow group horizontally
+        const arrowRow = document.createElement('div');
+        arrowRow.style.cssText = 'width:100%;display:flex;justify-content:flex-end;align-items:center;flex-shrink:0;margin-top:-32px;margin-bottom:-18px;padding-right:12px;position:relative;z-index:5;gap:8px;';
+        
+        arrowGroup.forEach(arrowItem => {
+          const arrow = document.createElement('img');
+          arrow.src = arrowItem.type === 'arrow_up' ? ARROW_SVG.up : ARROW_SVG.down;
+          arrow.style.cssText = 'width:55px;height:auto;display:block;flex-shrink:0;';
+          arrowRow.appendChild(arrow);
+        });
+        
+        container.appendChild(arrowRow);
+        arrowGroup = []; // Reset group
+      }
+      return;
+    }
+
+    // SLOTS: dice, action, text
+    const slot = document.createElement('div');
+    slot.className = 'behavior-slot';
+
+    // Icon wrapper
+    const iconWrap = document.createElement('div');
+    iconWrap.className = 'b-icon-wrap';
+    if (item.type === 'black') {
+      const img = document.createElement('img');
+      img.src = DICE.black;
+      img.className = 'b-die-img';
+      iconWrap.appendChild(img);
+    } else if (item.type === 'red') {
+      const img = document.createElement('img');
+      img.src = DICE.red;
+      img.className = 'b-die-img';
+      iconWrap.appendChild(img);
+    } else if (item.type === 'action') {
+      const actionImg = document.createElement('img');
+      actionImg.src = WEAPON_ICONS['fa-stop'];
+      actionImg.style.cssText = 'width:48px;height:48px;display:block;';
+      iconWrap.appendChild(actionImg);
+    } else if (item.type === 'text') {
+      iconWrap.innerHTML = `<div class="b-text">${item.text}</div>`;
+    }
+    slot.appendChild(iconWrap);
+
+    // Token circle (for placing physical token during play)
+    const token = document.createElement('div');
+    token.className = 'b-token-circle';
+    slot.appendChild(token);
+
+    container.appendChild(slot);
+  });
+}
+
+// ═══════════════════════════════════════
+// 10. EXPORT (PDF + JPG)
+// ═══════════════════════════════════════
+document.getElementById('exportBtn').addEventListener('click', () => {
+  document.getElementById('exportOverlay').classList.add('active');
+  document.getElementById('exportStatus').textContent = '';
+});
+document.getElementById('exportClose').addEventListener('click', () => {
+  document.getElementById('exportOverlay').classList.remove('active');
+});
+
+async function captureCard() {
+  document.getElementById('exportStatus').textContent = 'Rendering card…';
+  const canvas = await html2canvas(cardElement, {
+    scale: 2, useCORS: true, allowTaint: true,
+    backgroundColor: null
+  });
+  return canvas;
+}
+
+document.getElementById('dlJpg').addEventListener('click', async () => {
+  try {
+    const canvas = await captureCard();
+    document.getElementById('exportStatus').textContent = 'Downloading JPG…';
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/jpeg', 0.95);
+    a.download = 'enemy-card.jpg';
+    a.click();
+    document.getElementById('exportStatus').textContent = '✅ JPG downloaded!';
+    setTimeout(() => document.getElementById('exportOverlay').classList.remove('active'), 1200);
+  } catch(e) {
+    document.getElementById('exportStatus').textContent = '❌ Error: ' + e.message;
+  }
+});
+
+document.getElementById('dlPdf').addEventListener('click', async () => {
+  try {
+    const canvas = await captureCard();
+    document.getElementById('exportStatus').textContent = 'Generating PDF…';
+    const { jsPDF } = window.jspdf;
+    const w = canvas.width  / 2; // undo scale:2
+    const h = canvas.height / 2;
+    const mmW = w * 25.4 / 96;
+    const mmH = h * 25.4 / 96;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [mmW, mmH] });
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, mmW, mmH);
+    pdf.save('enemy-card.pdf');
+    document.getElementById('exportStatus').textContent = '✅ PDF downloaded!';
+    setTimeout(() => document.getElementById('exportOverlay').classList.remove('active'), 1200);
+  } catch(e) {
+    document.getElementById('exportStatus').textContent = '❌ Error: ' + e.message;
+  }
+});
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// COLLAPSE/EXPAND ALL SECTIONS
+// ═══════════════════════════════════════
+const toggleAllBtn = document.getElementById('toggleAllSections');
+let allCollapsed = false;
+
+toggleAllBtn.addEventListener('click', () => {
+  const allDetails = document.querySelectorAll('details');
+  
+  if (allCollapsed) {
+    // Expand all
+    allDetails.forEach(d => d.setAttribute('open', ''));
+    toggleAllBtn.textContent = '▼ Collapse All Sections';
+    allCollapsed = false;
+  } else {
+    // Collapse all
+    allDetails.forEach(d => d.removeAttribute('open'));
+    toggleAllBtn.textContent = '▶ Expand All Sections';
+    allCollapsed = true;
+  }
+});
+
+updateCard();
+renderAbilitiesEditor();
+renderAbilitiesCard();
+
+</script>
+</body>
+</html>
