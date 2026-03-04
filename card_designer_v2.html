@@ -1,0 +1,2162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universal Card Designer v2.2</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.app-container {
+  display: grid;
+  grid-template-rows: 60px 1fr;
+  grid-template-columns: 320px 1fr 280px;
+  height: 100vh;
+  gap: 0;
+}
+
+.toolbar {
+  grid-column: 1 / -1;
+  background: #2a2a2a;
+  border-bottom: 2px solid #3a3a3a;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+}
+
+.toolbar-group {
+  display: flex;
+  gap: 8px;
+  padding-right: 12px;
+  border-right: 1px solid #3a3a3a;
+}
+
+.toolbar-group:last-child { border-right: none; }
+
+.toolbar-btn {
+  background: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  color: #e0e0e0;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  background: #4a4a4a;
+  border-color: #5a5a5a;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sidebar-left {
+  background: #242424;
+  border-right: 2px solid #3a3a3a;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.sidebar-left h2 {
+  font-size: 14px;
+  color: #2a8a8a;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.control-group {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.control-group:last-child { border-bottom: none; }
+
+.control-label {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.control-input {
+  width: 100%;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  color: #e0e0e0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.control-input:focus {
+  outline: none;
+  border-color: #2a8a8a;
+}
+
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.canvas-container {
+  background: #1a1a1a;
+  position: relative;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.canvas-wrapper {
+  position: relative;
+  background: white;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.measurement-overlay {
+  position: absolute;
+  pointer-events: none;
+  color: #2a8a8a;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(42, 138, 138, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.measurement-x {
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.measurement-y {
+  left: -60px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-90deg);
+}
+
+.sidebar-right {
+  background: #242424;
+  border-left: 2px solid #3a3a3a;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.layer-item {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.layer-item:hover {
+  background: #333;
+  border-color: #4a4a4a;
+}
+
+.layer-item.selected {
+  background: #2a4a4a;
+  border-color: #2a8a8a;
+}
+
+.layer-icon {
+  width: 40px;
+  height: 40px;
+  background: #1a1a1a;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.layer-info {
+  flex: 1;
+}
+
+.layer-name {
+  font-size: 13px;
+  color: #e0e0e0;
+  margin-bottom: 4px;
+}
+
+.layer-type {
+  font-size: 11px;
+  color: #666;
+}
+
+.layer-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.layer-btn {
+  background: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  color: #999;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.layer-btn:hover {
+  background: #4a4a4a;
+  color: #e0e0e0;
+}
+
+.btn-primary {
+  background: #2a8a8a;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: #1a6d6d;
+}
+
+.btn-secondary {
+  background: #3a3a3a;
+  color: #e0e0e0;
+  border: 1px solid #4a4a4a;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #4a4a4a;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4a4a4a;
+}
+
+.section-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.section-border {
+  position: absolute;
+  background: rgba(42, 138, 138, 0.3);
+}
+
+.section-border.horizontal {
+  height: 2px;
+  left: 0;
+  right: 0;
+}
+
+.section-border.vertical {
+  width: 2px;
+  top: 0;
+  bottom: 0;
+}
+
+.element-overlay {
+  position: absolute;
+  pointer-events: auto;
+  cursor: move;
+}
+
+.element-overlay.locked {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.element-overlay.selected {
+  outline: 2px dashed #2a8a8a;
+  outline-offset: 2px;
+}
+
+.element-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.element-text {
+  width: 100%;
+  height: 100%;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  user-select: none;
+  pointer-events: none;
+}
+
+.transform-handles {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.resize-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border: 2px solid #2a8a8a;
+  border-radius: 50%;
+  pointer-events: auto;
+  z-index: 1001;
+}
+
+.resize-handle:hover {
+  background: #2a8a8a;
+  transform: scale(1.2);
+}
+
+.handle-nw { top: -6px; left: -6px; cursor: nw-resize; }
+.handle-ne { top: -6px; right: -6px; cursor: ne-resize; }
+.handle-sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+.handle-se { bottom: -6px; right: -6px; cursor: se-resize; }
+.handle-n { top: -6px; left: 50%; margin-left: -6px; cursor: n-resize; }
+.handle-s { bottom: -6px; left: 50%; margin-left: -6px; cursor: s-resize; }
+.handle-w { top: 50%; left: -6px; margin-top: -6px; cursor: w-resize; }
+.handle-e { top: 50%; right: -6px; margin-top: -6px; cursor: e-resize; }
+
+.section-clickable {
+  position: absolute;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  z-index: 5;
+}
+
+.section-clickable:hover {
+  background-color: rgba(42, 138, 138, 0.05);
+}
+
+.section-clickable.selected {
+  outline: 3px solid #2a8a8a;
+  outline-offset: -3px;
+  z-index: 6;
+}
+
+
+.color-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(42, 138, 138, 0.5);
+}
+
+
+/* Section Resize Handles */
+.section-resize-handle {
+  position: absolute;
+  background: rgba(42, 138, 138, 0.3);
+  z-index: 100;
+  transition: background 0.2s;
+}
+
+.section-resize-handle:hover {
+  background: rgba(42, 138, 138, 0.6);
+}
+
+.section-resize-handle.horizontal {
+  height: 8px;
+  left: 0;
+  right: 0;
+  cursor: ns-resize;
+  transform: translateY(-4px);
+}
+
+.section-resize-handle.vertical {
+  width: 8px;
+  top: 0;
+  bottom: 0;
+  cursor: ew-resize;
+  transform: translateX(-4px);
+}
+
+
+.zoom-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(42, 42, 42, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid #4a4a4a;
+  border-radius: 8px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.zoom-btn {
+  background: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  color: #e0e0e0;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.zoom-btn:hover {
+  background: #4a4a4a;
+  border-color: #5a5a5a;
+  transform: scale(1.05);
+}
+
+#zoomSlider {
+  width: 150px;
+  height: 6px;
+  background: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+#zoomSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #2a8a8a;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+#zoomSlider::-webkit-slider-thumb:hover {
+  background: #1a6d6d;
+  transform: scale(1.2);
+}
+
+#zoomValue {
+  font-size: 13px;
+  color: #2a8a8a;
+  font-weight: 600;
+  min-width: 45px;
+  text-align: center;
+}
+
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <button class="toolbar-btn" id="undoBtn" disabled>↶ Undo</button>
+      <button class="toolbar-btn" id="redoBtn" disabled>↷ Redo</button>
+    </div>
+    <div class="toolbar-group">
+      <button class="toolbar-btn" id="addImageBtn">🖼 Add Image</button>
+      <button class="toolbar-btn" id="addTextBtn">T Add Text</button>
+    </div>
+    <div class="toolbar-group">
+      <button class="toolbar-btn" id="saveBtn">💾 Save Design</button>
+      <button class="toolbar-btn" id="loadBtn">📁 Load Design</button>
+    </div>
+    <div class="toolbar-group">
+      <button class="toolbar-btn" id="exportJPGBtn">📸 Export JPG</button>
+      <button class="toolbar-btn" id="exportPDFBtn">📄 Export PDF</button>
+      <button class="toolbar-btn" id="exportPrintBtn">🖨 Print-Ready PDF</button>
+    </div>
+  </div>
+
+  <div class="sidebar-left">
+    <h2>Card Properties</h2>
+    
+    <div class="control-group">
+      <label class="control-label">Card Dimensions (cm)</label>
+      <div class="input-row">
+        <div>
+          <label class="control-label" style="font-size: 10px;">Width</label>
+          <input type="number" id="cardWidth" class="control-input" value="6.35" step="0.1" min="1" max="42">
+        </div>
+        <div>
+          <label class="control-label" style="font-size: 10px;">Height</label>
+          <input type="number" id="cardHeight" class="control-input" value="8.89" step="0.1" min="1" max="59.4">
+        </div>
+      </div>
+    
+    
+    <div class="control-group">
+      <label class="control-label">Quick Color Palette</label>
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 8px;">
+        <div class="color-swatch" data-color="#000000" style="background: #000000;"></div>
+        <div class="color-swatch" data-color="#FFFFFF" style="background: #FFFFFF; border: 1px solid #3a3a3a;"></div>
+        <div class="color-swatch" data-color="#FF0000" style="background: #FF0000;"></div>
+        <div class="color-swatch" data-color="#00FF00" style="background: #00FF00;"></div>
+        <div class="color-swatch" data-color="#0000FF" style="background: #0000FF;"></div>
+        <div class="color-swatch" data-color="#FFFF00" style="background: #FFFF00;"></div>
+        <div class="color-swatch" data-color="#FF00FF" style="background: #FF00FF;"></div>
+        <div class="color-swatch" data-color="#00FFFF" style="background: #00FFFF;"></div>
+        <div class="color-swatch" data-color="#FFA500" style="background: #FFA500;"></div>
+        <div class="color-swatch" data-color="#800080" style="background: #800080;"></div>
+      </div>
+    </div></div>
+
+    <div class="control-group">
+      <label class="control-label">Grid Layout</label>
+      <div class="input-row">
+        <div>
+          <label class="control-label" style="font-size: 10px;">Rows (Y)</label>
+          <input type="number" id="gridRows" class="control-input" value="1" min="1" max="10">
+        </div>
+        <div>
+          <label class="control-label" style="font-size: 10px;">Columns (X)</label>
+          <input type="number" id="gridCols" class="control-input" value="3" min="1" max="10">
+        </div>
+      </div>
+      <button class="btn-primary" id="updateGridBtn" style="width: 100%; margin-top: 12px;">Update Grid</button>
+      
+      <label class="control-label" style="margin-top: 16px;">
+        <input type="checkbox" id="snapToGrid" style="margin-right: 8px;">
+        Snap to Grid (10px)
+      </label>
+    </div>
+
+    <div id="sectionProperties" style="display: none;">
+      <h2>Selected Section</h2>
+      <div class="control-group">
+        <label class="control-label">Section ID</label>
+        <input type="text" id="sectionId" class="control-input" readonly>
+        
+        <label class="control-label" style="margin-top: 12px;">Background Color</label>
+        <input type="color" id="sectionBgColor" class="control-input" value="#f5f3ee">
+        <button class="btn-secondary" id="clearSectionColor" style="width: 100%; margin-top: 8px;">Clear Color</button>
+        
+        <label class="control-label" style="margin-top: 16px;">Background Image</label>
+        <input type="file" id="sectionBgImage" class="control-input" accept="image/*" style="padding: 6px;">
+        <button class="btn-secondary" id="clearSectionImage" style="width: 100%; margin-top: 8px;">Clear Image</button>
+        
+        <div id="sectionImageControls" style="display: none; margin-top: 16px;">
+          <label class="control-label">Image Opacity</label>
+          <input type="range" id="sectionImageOpacity" class="control-input" min="0" max="1" step="0.01" value="1">
+          <span id="sectionOpacityVal" style="font-size: 11px; color: #999;">1.00</span>
+          
+          <label class="control-label" style="margin-top: 12px;">Image Scale (%)</label>
+          <input type="range" id="sectionImageScale" class="control-input" min="50" max="200" step="5" value="100">
+          <span id="sectionScaleVal" style="font-size: 11px; color: #999;">100%</span>
+          
+          <label class="control-label" style="margin-top: 12px;">Position X (%)</label>
+          <input type="range" id="sectionImageX" class="control-input" min="0" max="100" step="1" value="50">
+          <span id="sectionXVal" style="font-size: 11px; color: #999;">50%</span>
+          
+          <label class="control-label" style="margin-top: 12px;">Position Y (%)</label>
+          <input type="range" id="sectionImageY" class="control-input" min="0" max="100" step="1" value="50">
+          <span id="sectionYVal" style="font-size: 11px; color: #999;">50%</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="elementProperties" style="display: none;">
+      <h2>Selected Element</h2>
+      <div class="control-group" id="textProperties" style="display: none;">
+        <label class="control-label">Text Content</label>
+        <textarea id="textContent" class="control-input" rows="3"></textarea>
+        
+        <label class="control-label" style="margin-top: 12px;">Font Family</label>
+        <select id="fontFamily" class="control-input">
+          <option value="Arial">Arial</option>
+          <option value="Helvetica">Helvetica</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Verdana">Verdana</option>
+        </select>
+
+        <label class="control-label" style="margin-top: 12px;">Font Size</label>
+        <input type="number" id="fontSize" class="control-input" value="16" min="8" max="200">
+
+        <label class="control-label" style="margin-top: 12px;">Text Color</label>
+        <input type="color" id="textColor" class="control-input" value="#000000">
+
+        <div style="margin-top: 12px; display: flex; gap: 8px;">
+          <button class="btn-secondary" id="boldBtn" style="flex: 1; font-weight: bold;">B</button>
+          <button class="btn-secondary" id="italicBtn" style="flex: 1; font-style: italic;">I</button>
+          <button class="btn-secondary" id="underlineBtn" style="flex: 1; text-decoration: underline;">U</button>
+        </div>
+        
+        <label class="control-label" style="margin-top: 12px;">Text Alignment</label>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" id="alignLeftBtn" style="flex: 1;">◀</button>
+          <button class="btn-secondary" id="alignCenterBtn" style="flex: 1;">■</button>
+          <button class="btn-secondary" id="alignRightBtn" style="flex: 1;">▶</button>
+        </div>
+        
+        <label class="control-label" style="margin-top: 12px;">Line Height</label>
+        <input type="number" id="lineHeight" class="control-input" value="1.2" min="0.5" max="3" step="0.1">
+        
+        <label class="control-label" style="margin-top: 12px;">Letter Spacing (px)</label>
+        <input type="number" id="letterSpacing" class="control-input" value="0" min="-5" max="20" step="0.5">
+      </div>
+
+      <div class="control-group">
+        <label class="control-label">Opacity</label>
+        <input type="range" id="elementOpacity" class="control-input" min="0" max="1" step="0.01" value="1">
+      
+        
+        <label class="control-label">Constraint Mode</label>
+        <select id="constraintMode" class="control-input">
+          <option value="free">Free-Floating</option>
+          <option value="section">Constrained to Section</option>
+        </select>
+        
+        <button class="btn-secondary" id="duplicateBtn" style="width: 100%; margin-top: 12px;">📋 Duplicate Element</button>
+        
+        
+        
+        <label class="control-label">Rotation (degrees)</label>
+        <input type="range" id="elementRotation" class="control-input" min="0" max="360" step="1" value="0">
+        <span id="rotationVal" style="font-size: 11px; color: #999;">0°</span></div>
+
+      <div class="control-group">
+        <button class="btn-secondary" id="lockBtn" style="width: 100%;">🔓 Lock Element</button>
+        <button class="btn-secondary" id="deleteBtn" style="width: 100%; margin-top: 8px;">🗑 Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="canvas-container">
+    <div class="canvas-wrapper" id="canvasWrapper">
+      <div class="measurement-overlay measurement-x" id="measureX">6.35 cm</div>
+      <div class="measurement-overlay measurement-y" id="measureY">8.89 cm</div>
+      <canvas id="mainCanvas"></canvas>
+      <div class="section-grid" id="sectionGrid"></div>
+      <div id="elementsContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></div>
+    </div>
+  
+      
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out">−</button>
+        <button class="zoom-btn" id="fitToScreenBtn" title="Fit to Screen">⊡</button>
+        <input type="range" id="zoomSlider" min="25" max="200" value="100" step="5">
+        <span id="zoomValue">100%</span>
+        <button class="zoom-btn" id="zoomInBtn" title="Zoom In">+</button>
+      </div>
+  </div>
+
+  <div class="sidebar-right">
+    <h2>Layers</h2>
+    <div id="layersList"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+const state = {
+  card: { width: 6.35, height: 8.89, rows: 1, cols: 3 },
+  sections: [],
+  elements: [],
+  selectedElement: null,
+  selectedSection: null,
+  history: [],
+  historyIndex: -1,
+  nextId: 1,
+  snapToGrid: false,
+  zoomLevel: 100,
+  dragState: {
+    isDragging: false,
+    isResizing: false,
+    isResizingSection: false,
+    startX: 0,
+    startY: 0,
+    startWidth: 0,
+    startHeight: 0,
+    startElX: 0,
+    startElY: 0,
+    resizeHandle: null,
+    sectionResizeType: null,
+    sectionResizeIndex: null
+  }
+};
+
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const canvasWrapper = document.getElementById('canvasWrapper');
+const elementsContainer = document.getElementById('elementsContainer');
+const CM_TO_PX = 37.7952755906;
+const MAX_IMAGES = 20;
+
+function init() {
+  updateCanvasSize();
+  createSectionGrid();
+  render();
+  
+  document.getElementById('cardWidth').addEventListener('input', updateCardDimensions);
+  document.getElementById('cardHeight').addEventListener('input', updateCardDimensions);
+  document.getElementById('updateGridBtn').addEventListener('click', updateGrid);
+  document.getElementById('snapToGrid').addEventListener('change', (e) => {
+    state.snapToGrid = e.target.checked;
+  });
+  
+  document.getElementById('addImageBtn').addEventListener('click', addImage);
+  document.getElementById('addTextBtn').addEventListener('click', addText);
+  document.getElementById('saveBtn').addEventListener('click', saveDesign);
+  document.getElementById('loadBtn').addEventListener('click', loadDesign);
+  document.getElementById('undoBtn').addEventListener('click', undo);
+  document.getElementById('redoBtn').addEventListener('click', redo);
+  
+  document.getElementById('textContent')?.addEventListener('input', updateTextContent);
+  document.getElementById('fontFamily')?.addEventListener('change', updateFontFamily);
+  document.getElementById('fontSize')?.addEventListener('input', updateFontSize);
+  document.getElementById('textColor')?.addEventListener('input', updateTextColor);
+  document.getElementById('elementOpacity')?.addEventListener('input', updateOpacity);
+  document.getElementById('elementRotation')?.addEventListener('input', updateRotation);
+  document.getElementById('lockBtn')?.addEventListener('click', toggleLockSelected);
+  document.getElementById('deleteBtn')?.addEventListener('click', deleteSelected);
+  
+  document.getElementById('boldBtn')?.addEventListener('click', toggleBold);
+  document.getElementById('italicBtn')?.addEventListener('click', toggleItalic);
+  document.getElementById('underlineBtn')?.addEventListener('click', toggleUnderline);
+  document.getElementById('alignLeftBtn')?.addEventListener('click', () => setAlignment('left'));
+  document.getElementById('alignCenterBtn')?.addEventListener('click', () => setAlignment('center'));
+  document.getElementById('alignRightBtn')?.addEventListener('click', () => setAlignment('right'));
+  document.getElementById('lineHeight')?.addEventListener('input', updateLineHeight);
+  document.getElementById('letterSpacing')?.addEventListener('input', updateLetterSpacing);
+  document.getElementById('constraintMode')?.addEventListener('change', updateConstraintMode);
+  document.getElementById('duplicateBtn')?.addEventListener('click', duplicateElement);
+  
+  document.querySelectorAll('.color-swatch').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      const color = swatch.dataset.color;
+      if (state.selectedElement && state.selectedElement.type === 'text') {
+        state.selectedElement.color = color;
+        document.getElementById('textColor').value = color;
+        render();
+        saveState();
+      } else if (state.selectedSection) {
+        state.selectedSection.bgColor = color;
+        document.getElementById('sectionBgColor').value = color;
+        render();
+        saveState();
+      }
+    });
+  });
+  
+  document.getElementById('exportJPGBtn').addEventListener('click', exportJPG);
+  document.getElementById('exportPDFBtn').addEventListener('click', exportPDF);
+  document.getElementById('exportPrintBtn').addEventListener('click', exportPrintReadyPDF);
+  
+  document.getElementById('zoomSlider').addEventListener('input', handleZoomSlider);
+  document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+  document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+  document.getElementById('fitToScreenBtn').addEventListener('click', fitToScreen);
+  
+  document.addEventListener('keydown', handleKeyboard);
+  
+  renderSectionClickables();
+  renderSectionResizeHandles();
+  saveState();
+  setZoom(100);
+}
+
+function handleKeyboard(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  
+  if (e.key === 'Delete' && state.selectedElement) {
+    deleteSelected();
+  } else if (e.ctrlKey && e.key === 'z') {
+    e.preventDefault();
+    undo();
+  } else if (e.ctrlKey && e.key === 'y') {
+    e.preventDefault();
+    redo();
+  } else if (e.ctrlKey && e.key === 'd' && state.selectedElement) {
+    e.preventDefault();
+    duplicateElement();
+  }
+}
+
+function snapValue(value) {
+  if (!state.snapToGrid) return value;
+  return Math.round(value / 10) * 10;
+}
+
+function updateCanvasSize() {
+  const width = state.card.width * CM_TO_PX;
+  const height = state.card.height * CM_TO_PX;
+  
+  canvas.width = width;
+  canvas.height = height;
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  
+  canvasWrapper.style.width = width + 'px';
+  canvasWrapper.style.height = height + 'px';
+  elementsContainer.style.width = width + 'px';
+  elementsContainer.style.height = height + 'px';
+  
+  document.getElementById('measureX').textContent = state.card.width.toFixed(2) + ' cm';
+  document.getElementById('measureY').textContent = state.card.height.toFixed(2) + ' cm';
+}
+
+function updateCardDimensions() {
+  const width = parseFloat(document.getElementById('cardWidth').value);
+  const height = parseFloat(document.getElementById('cardHeight').value);
+  
+  state.card.width = Math.min(Math.max(width, 1), 42);
+  state.card.height = Math.min(Math.max(height, 1), 59.4);
+  
+  document.getElementById('cardWidth').value = state.card.width;
+  document.getElementById('cardHeight').value = state.card.height;
+  
+  updateCanvasSize();
+  createSectionGrid();
+  render();
+  saveState();
+}
+
+function createSectionGrid() {
+  const rows = parseInt(document.getElementById('gridRows').value);
+  const cols = parseInt(document.getElementById('gridCols').value);
+  
+  state.card.rows = rows;
+  state.card.cols = cols;
+  
+  // Initialize section dimensions if not already custom
+  if (!state.card.rowHeights || state.card.rowHeights.length !== rows) {
+    state.card.rowHeights = Array(rows).fill(canvas.height / rows);
+  }
+  if (!state.card.colWidths || state.card.colWidths.length !== cols) {
+    state.card.colWidths = Array(cols).fill(canvas.width / cols);
+  }
+  
+  // Normalize dimensions to fit canvas
+  const totalHeight = state.card.rowHeights.reduce((a, b) => a + b, 0);
+  const totalWidth = state.card.colWidths.reduce((a, b) => a + b, 0);
+  
+  if (totalHeight !== canvas.height) {
+    const scale = canvas.height / totalHeight;
+    state.card.rowHeights = state.card.rowHeights.map(h => h * scale);
+  }
+  
+  if (totalWidth !== canvas.width) {
+    const scale = canvas.width / totalWidth;
+    state.card.colWidths = state.card.colWidths.map(w => w * scale);
+  }
+  
+  state.sections = [];
+  let yPos = 0;
+  
+  for (let row = 0; row < rows; row++) {
+    let xPos = 0;
+    const rowHeight = state.card.rowHeights[row];
+    
+    for (let col = 0; col < cols; col++) {
+      const colWidth = state.card.colWidths[col];
+      
+      state.sections.push({
+        id: `section_${row}_${col}`,
+        row, col,
+        x: xPos,
+        y: yPos,
+        width: colWidth,
+        height: rowHeight,
+        bgColor: '#f5f3ee',
+        bgImage: null,
+        bgImageUrl: null,
+        bgImageOpacity: 1,
+        bgImageScale: 100,
+        bgImageX: 50,
+        bgImageY: 50
+      });
+      
+      xPos += colWidth;
+    }
+    
+    yPos += rowHeight;
+  }
+  
+  renderSectionBorders();
+  renderSectionClickables();
+  renderSectionResizeHandles();
+}
+
+function renderSectionBorders() {
+  const grid = document.getElementById('sectionGrid');
+  grid.innerHTML = '';
+  
+  const rows = state.card.rows;
+  const cols = state.card.cols;
+  
+  // Horizontal lines
+  let yPos = 0;
+  for (let i = 0; i < rows - 1; i++) {
+    yPos += state.card.rowHeights[i];
+    const line = document.createElement('div');
+    line.className = 'section-border horizontal';
+    line.style.top = yPos + 'px';
+    grid.appendChild(line);
+  }
+  
+  // Vertical lines
+  let xPos = 0;
+  for (let i = 0; i < cols - 1; i++) {
+    xPos += state.card.colWidths[i];
+    const line = document.createElement('div');
+    line.className = 'section-border vertical';
+    line.style.left = xPos + 'px';
+    grid.appendChild(line);
+  }
+}
+
+function renderSectionResizeHandles() {
+  let handlesLayer = document.getElementById('sectionResizeHandles');
+  if (!handlesLayer) {
+    handlesLayer = document.createElement('div');
+    handlesLayer.id = 'sectionResizeHandles';
+    handlesLayer.style.position = 'absolute';
+    handlesLayer.style.top = '0';
+    handlesLayer.style.left = '0';
+    handlesLayer.style.width = '100%';
+    handlesLayer.style.height = '100%';
+    handlesLayer.style.zIndex = '99';
+    handlesLayer.style.pointerEvents = 'none';
+    canvasWrapper.appendChild(handlesLayer);
+  }
+  
+  handlesLayer.innerHTML = '';
+  
+  const rows = state.card.rows;
+  const cols = state.card.cols;
+  
+  // Horizontal resize handles (between rows)
+  let yPos = 0;
+  for (let i = 0; i < rows - 1; i++) {
+    yPos += state.card.rowHeights[i];
+    
+    const handle = document.createElement('div');
+    handle.className = 'section-resize-handle horizontal';
+    handle.style.top = yPos + 'px';
+    handle.style.pointerEvents = 'auto';
+    handle.dataset.index = i;
+    handle.dataset.type = 'horizontal';
+    
+    handle.addEventListener('mousedown', (e) => startSectionResize(e, 'horizontal', i));
+    
+    handlesLayer.appendChild(handle);
+  }
+  
+  // Vertical resize handles (between columns)
+  let xPos = 0;
+  for (let i = 0; i < cols - 1; i++) {
+    xPos += state.card.colWidths[i];
+    
+    const handle = document.createElement('div');
+    handle.className = 'section-resize-handle vertical';
+    handle.style.left = xPos + 'px';
+    handle.style.pointerEvents = 'auto';
+    handle.dataset.index = i;
+    handle.dataset.type = 'vertical';
+    
+    handle.addEventListener('mousedown', (e) => startSectionResize(e, 'vertical', i));
+    
+    handlesLayer.appendChild(handle);
+  }
+}
+
+function startSectionResize(e, type, index) {
+  e.stopPropagation();
+  
+  state.dragState.isResizingSection = true;
+  state.dragState.sectionResizeType = type;
+  state.dragState.sectionResizeIndex = index;
+  state.dragState.startX = e.clientX;
+  state.dragState.startY = e.clientY;
+  
+  if (type === 'horizontal') {
+    state.dragState.startHeight = state.card.rowHeights[index];
+    state.dragState.startHeight2 = state.card.rowHeights[index + 1];
+  } else {
+    state.dragState.startWidth = state.card.colWidths[index];
+    state.dragState.startWidth2 = state.card.colWidths[index + 1];
+  }
+  
+  document.addEventListener('mousemove', onSectionResize);
+  document.addEventListener('mouseup', stopSectionResize);
+}
+
+function onSectionResize(e) {
+  if (!state.dragState.isResizingSection) return;
+  
+  const type = state.dragState.sectionResizeType;
+  const index = state.dragState.sectionResizeIndex;
+  
+  if (type === 'horizontal') {
+    const dy = e.clientY - state.dragState.startY;
+    const newHeight1 = Math.max(50, state.dragState.startHeight + dy);
+    const newHeight2 = Math.max(50, state.dragState.startHeight2 - dy);
+    
+    state.card.rowHeights[index] = newHeight1;
+    state.card.rowHeights[index + 1] = newHeight2;
+  } else {
+    const dx = e.clientX - state.dragState.startX;
+    const newWidth1 = Math.max(50, state.dragState.startWidth + dx);
+    const newWidth2 = Math.max(50, state.dragState.startWidth2 - dx);
+    
+    state.card.colWidths[index] = newWidth1;
+    state.card.colWidths[index + 1] = newWidth2;
+  }
+  
+  updateSectionsFromDimensions();
+  renderSectionBorders();
+  renderSectionResizeHandles();
+  renderSectionClickables();
+  render();
+}
+
+function stopSectionResize() {
+  if (state.dragState.isResizingSection) {
+    state.dragState.isResizingSection = false;
+    document.removeEventListener('mousemove', onSectionResize);
+    document.removeEventListener('mouseup', stopSectionResize);
+    saveState();
+  }
+}
+
+function updateSectionsFromDimensions() {
+  let yPos = 0;
+  
+  for (let row = 0; row < state.card.rows; row++) {
+    let xPos = 0;
+    const rowHeight = state.card.rowHeights[row];
+    
+    for (let col = 0; col < state.card.cols; col++) {
+      const colWidth = state.card.colWidths[col];
+      const section = state.sections.find(s => s.row === row && s.col === col);
+      
+      if (section) {
+        section.x = xPos;
+        section.y = yPos;
+        section.width = colWidth;
+        section.height = rowHeight;
+      }
+      
+      xPos += colWidth;
+    }
+    
+    yPos += rowHeight;
+  }
+}
+
+function renderSectionClickables() {
+  let sectionsLayer = document.getElementById('sectionsLayer');
+  if (!sectionsLayer) {
+    sectionsLayer = document.createElement('div');
+    sectionsLayer.id = 'sectionsLayer';
+    sectionsLayer.style.position = 'absolute';
+    sectionsLayer.style.top = '0';
+    sectionsLayer.style.left = '0';
+    sectionsLayer.style.width = '100%';
+    sectionsLayer.style.height = '100%';
+    sectionsLayer.style.zIndex = '5';
+    canvasWrapper.insertBefore(sectionsLayer, document.getElementById('sectionGrid'));
+  }
+  
+  sectionsLayer.innerHTML = '';
+  
+  state.sections.forEach(section => {
+    const div = document.createElement('div');
+    div.className = 'section-clickable';
+    div.id = `clickable_${section.id}`;
+    div.style.left = section.x + 'px';
+    div.style.top = section.y + 'px';
+    div.style.width = section.width + 'px';
+    div.style.height = section.height + 'px';
+    
+    if (state.selectedSection && state.selectedSection.id === section.id) {
+      div.classList.add('selected');
+    }
+    
+    div.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectSection(section);
+    });
+    
+    sectionsLayer.appendChild(div);
+  });
+}
+
+function selectSection(section) {
+  state.selectedSection = section;
+  state.selectedElement = null;
+  renderSectionClickables();
+  render();
+  showSectionProperties();
+}
+
+function showSectionProperties() {
+  const props = document.getElementById('sectionProperties');
+  const elementProps = document.getElementById('elementProperties');
+  
+  elementProps.style.display = 'none';
+  
+  if (!state.selectedSection) {
+    props.style.display = 'none';
+    return;
+  }
+  
+  props.style.display = 'block';
+  
+  document.getElementById('sectionId').value = state.selectedSection.id;
+  document.getElementById('sectionBgColor').value = state.selectedSection.bgColor;
+  
+  const imageControls = document.getElementById('sectionImageControls');
+  if (state.selectedSection.bgImageUrl) {
+    imageControls.style.display = 'block';
+    document.getElementById('sectionImageOpacity').value = state.selectedSection.bgImageOpacity;
+    document.getElementById('sectionOpacityVal').textContent = state.selectedSection.bgImageOpacity.toFixed(2);
+    document.getElementById('sectionImageScale').value = state.selectedSection.bgImageScale;
+    document.getElementById('sectionScaleVal').textContent = state.selectedSection.bgImageScale + '%';
+    document.getElementById('sectionImageX').value = state.selectedSection.bgImageX;
+    document.getElementById('sectionXVal').textContent = state.selectedSection.bgImageX + '%';
+    document.getElementById('sectionImageY').value = state.selectedSection.bgImageY;
+    document.getElementById('sectionYVal').textContent = state.selectedSection.bgImageY + '%';
+  } else {
+    imageControls.style.display = 'none';
+  }
+  
+  document.getElementById('sectionBgColor').onchange = updateSectionBgColor;
+  document.getElementById('clearSectionColor').onclick = clearSectionColor;
+  document.getElementById('sectionBgImage').onchange = updateSectionBgImage;
+  document.getElementById('clearSectionImage').onclick = clearSectionImage;
+  document.getElementById('sectionImageOpacity').oninput = updateSectionImageOpacity;
+  document.getElementById('sectionImageScale').oninput = updateSectionImageScale;
+  document.getElementById('sectionImageX').oninput = updateSectionImageX;
+  document.getElementById('sectionImageY').oninput = updateSectionImageY;
+}
+
+function updateSectionBgColor(e) {
+  if (state.selectedSection) {
+    state.selectedSection.bgColor = e.target.value;
+    render();
+    saveState();
+  }
+}
+
+function clearSectionColor() {
+  if (state.selectedSection) {
+    state.selectedSection.bgColor = 'transparent';
+    document.getElementById('sectionBgColor').value = '#f5f3ee';
+    render();
+    saveState();
+  }
+}
+
+function updateSectionBgImage(e) {
+  const file = e.target.files[0];
+  if (!file || !state.selectedSection) return;
+  
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    img.onload = () => {
+      state.selectedSection.bgImage = img;
+      state.selectedSection.bgImageUrl = event.target.result;
+      render();
+      showSectionProperties();
+      saveState();
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearSectionImage() {
+  if (state.selectedSection) {
+    state.selectedSection.bgImage = null;
+    state.selectedSection.bgImageUrl = null;
+    document.getElementById('sectionBgImage').value = '';
+    render();
+    showSectionProperties();
+    saveState();
+  }
+}
+
+function updateSectionImageOpacity(e) {
+  if (state.selectedSection) {
+    state.selectedSection.bgImageOpacity = parseFloat(e.target.value);
+    document.getElementById('sectionOpacityVal').textContent = state.selectedSection.bgImageOpacity.toFixed(2);
+    render();
+  }
+}
+
+function updateSectionImageScale(e) {
+  if (state.selectedSection) {
+    state.selectedSection.bgImageScale = parseInt(e.target.value);
+    document.getElementById('sectionScaleVal').textContent = state.selectedSection.bgImageScale + '%';
+    render();
+  }
+}
+
+function updateSectionImageX(e) {
+  if (state.selectedSection) {
+    state.selectedSection.bgImageX = parseInt(e.target.value);
+    document.getElementById('sectionXVal').textContent = state.selectedSection.bgImageX + '%';
+    render();
+  }
+}
+
+function updateSectionImageY(e) {
+  if (state.selectedSection) {
+    state.selectedSection.bgImageY = parseInt(e.target.value);
+    document.getElementById('sectionYVal').textContent = state.selectedSection.bgImageY + '%';
+    render();
+  }
+}
+
+function updateGrid() {
+  createSectionGrid();
+  render();
+  saveState();
+}
+
+function render() {
+  renderCanvas();
+  renderElements();
+  updateLayersList();
+}
+
+function renderCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  state.sections.forEach(section => {
+    ctx.fillStyle = section.bgColor;
+    ctx.fillRect(section.x, section.y, section.width, section.height);
+    
+    if (section.bgImage) {
+      ctx.save();
+      ctx.globalAlpha = section.bgImageOpacity;
+      
+      const scale = section.bgImageScale / 100;
+      const imgWidth = section.bgImage.width * scale;
+      const imgHeight = section.bgImage.height * scale;
+      
+      const xPos = section.x + (section.width * section.bgImageX / 100) - (imgWidth / 2);
+      const yPos = section.y + (section.height * section.bgImageY / 100) - (imgHeight / 2);
+      
+      ctx.drawImage(section.bgImage, xPos, yPos, imgWidth, imgHeight);
+      ctx.restore();
+    }
+  });
+}
+
+function renderElements() {
+  elementsContainer.innerHTML = '';
+  
+  state.elements.forEach(element => {
+    const div = document.createElement('div');
+    div.className = 'element-overlay';
+    div.id = `element_${element.id}`;
+    div.style.left = element.x + 'px';
+    div.style.top = element.y + 'px';
+    div.style.width = element.width + 'px';
+    div.style.height = element.height + 'px';
+    div.style.opacity = element.opacity;
+    div.style.pointerEvents = 'auto';
+    
+    // Apply rotation
+    if (element.rotation) {
+      div.style.transform = `rotate(${element.rotation}deg)`;
+      div.style.transformOrigin = 'center center';
+    }
+    
+    if (element.locked) div.classList.add('locked');
+    if (state.selectedElement && state.selectedElement.id === element.id) div.classList.add('selected');
+    
+    if (element.type === 'image' && element.imageUrl) {
+      const img = document.createElement('img');
+      img.src = element.imageUrl;
+      img.className = 'element-image';
+      img.draggable = false;
+      div.appendChild(img);
+    } else if (element.type === 'text') {
+      const text = document.createElement('div');
+      text.className = 'element-text';
+      text.textContent = element.content;
+      text.style.fontFamily = element.fontFamily;
+      text.style.fontSize = element.fontSize + 'px';
+      text.style.color = element.color;
+      text.style.fontWeight = element.bold ? 'bold' : 'normal';
+      text.style.fontStyle = element.italic ? 'italic' : 'normal';
+      text.style.textDecoration = element.underline ? 'underline' : 'none';
+      text.style.textAlign = element.align || 'left';
+      text.style.lineHeight = element.lineHeight || 1.2;
+      text.style.letterSpacing = (element.letterSpacing || 0) + 'px';
+      div.appendChild(text);
+    }
+    
+    div.addEventListener('mousedown', (e) => startDrag(e, element));
+    elementsContainer.appendChild(div);
+  });
+  
+  renderTransformHandles();
+}
+
+function renderTransformHandles() {
+  const existing = document.getElementById('transformHandles');
+  if (existing) existing.remove();
+  
+  if (!state.selectedElement || state.selectedElement.locked) return;
+  
+  const el = state.selectedElement;
+  const handles = document.createElement('div');
+  handles.id = 'transformHandles';
+  handles.className = 'transform-handles';
+  handles.style.left = el.x + 'px';
+  handles.style.top = el.y + 'px';
+  handles.style.width = el.width + 'px';
+  handles.style.height = el.height + 'px';
+  handles.style.border = '2px dashed #2a8a8a';
+  
+  if (el.rotation) {
+    handles.style.transform = `rotate(${el.rotation}deg)`;
+    handles.style.transformOrigin = 'center center';
+  }
+  
+  const handlePositions = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+  handlePositions.forEach(pos => {
+    const handle = document.createElement('div');
+    handle.className = `resize-handle handle-${pos}`;
+    handle.addEventListener('mousedown', (e) => startResize(e, pos));
+    handles.appendChild(handle);
+  });
+  
+  elementsContainer.appendChild(handles);
+}
+
+function startDrag(e, element) {
+  if (element.locked) return;
+  e.stopPropagation();
+  selectElement(element);
+  
+  state.dragState.isDragging = true;
+  state.dragState.startX = e.clientX;
+  state.dragState.startY = e.clientY;
+  state.dragState.startElX = element.x;
+  state.dragState.startElY = element.y;
+  
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+}
+
+function onDrag(e) {
+  if (!state.dragState.isDragging) return;
+  
+  const dx = e.clientX - state.dragState.startX;
+  const dy = e.clientY - state.dragState.startY;
+  
+  let newX = state.dragState.startElX + dx;
+  let newY = state.dragState.startElY + dy;
+  
+  if (state.snapToGrid) {
+    newX = snapValue(newX);
+    newY = snapValue(newY);
+  }
+  
+  if (state.selectedElement.constraintMode === 'section') {
+    const section = findContainingSection(state.selectedElement);
+    if (section) {
+      newX = Math.max(section.x, Math.min(section.x + section.width - state.selectedElement.width, newX));
+      newY = Math.max(section.y, Math.min(section.y + section.height - state.selectedElement.height, newY));
+    }
+  }
+  
+  state.selectedElement.x = Math.max(0, Math.min(canvas.width - state.selectedElement.width, newX));
+  state.selectedElement.y = Math.max(0, Math.min(canvas.height - state.selectedElement.height, newY));
+  
+  renderElements();
+}
+
+function stopDrag() {
+  if (state.dragState.isDragging) {
+    state.dragState.isDragging = false;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', stopDrag);
+    saveState();
+  }
+}
+
+function startResize(e, handle) {
+  e.stopPropagation();
+  
+  state.dragState.isResizing = true;
+  state.dragState.resizeHandle = handle;
+  state.dragState.startX = e.clientX;
+  state.dragState.startY = e.clientY;
+  state.dragState.startWidth = state.selectedElement.width;
+  state.dragState.startHeight = state.selectedElement.height;
+  state.dragState.startElX = state.selectedElement.x;
+  state.dragState.startElY = state.selectedElement.y;
+  
+  document.addEventListener('mousemove', onResize);
+  document.addEventListener('mouseup', stopResize);
+}
+
+function onResize(e) {
+  if (!state.dragState.isResizing) return;
+  
+  const dx = e.clientX - state.dragState.startX;
+  const dy = e.clientY - state.dragState.startY;
+  const handle = state.dragState.resizeHandle;
+  const el = state.selectedElement;
+  
+  let newWidth = state.dragState.startWidth;
+  let newHeight = state.dragState.startHeight;
+  let newX = state.dragState.startElX;
+  let newY = state.dragState.startElY;
+  
+  if (handle.includes('e')) newWidth = Math.max(20, state.dragState.startWidth + dx);
+  if (handle.includes('w')) {
+    newWidth = Math.max(20, state.dragState.startWidth - dx);
+    newX = state.dragState.startElX + dx;
+  }
+  if (handle.includes('s')) newHeight = Math.max(20, state.dragState.startHeight + dy);
+  if (handle.includes('n')) {
+    newHeight = Math.max(20, state.dragState.startHeight - dy);
+    newY = state.dragState.startElY + dy;
+  }
+  
+  if (state.snapToGrid) {
+    newWidth = snapValue(newWidth);
+    newHeight = snapValue(newHeight);
+    newX = snapValue(newX);
+    newY = snapValue(newY);
+  }
+  
+  el.width = Math.min(canvas.width - newX, newWidth);
+  el.height = Math.min(canvas.height - newY, newHeight);
+  el.x = Math.max(0, newX);
+  el.y = Math.max(0, newY);
+  
+  renderElements();
+}
+
+function stopResize() {
+  if (state.dragState.isResizing) {
+    state.dragState.isResizing = false;
+    state.dragState.resizeHandle = null;
+    document.removeEventListener('mousemove', onResize);
+    document.removeEventListener('mouseup', stopResize);
+    saveState();
+  }
+}
+
+function findContainingSection(element) {
+  return state.sections.find(section =>
+    element.x >= section.x &&
+    element.y >= section.y &&
+    element.x + element.width <= section.x + section.width &&
+    element.y + element.height <= section.y + section.height
+  );
+}
+
+function addImage() {
+  const imageCount = state.elements.filter(el => el.type === 'image').length;
+  if (imageCount >= MAX_IMAGES) {
+    alert(`Maximum of ${MAX_IMAGES} images reached!`);
+    return;
+  }
+  
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const element = {
+          id: state.nextId++,
+          type: 'image',
+          x: 50,
+          y: 50,
+          width: Math.min(img.width / 2, canvas.width - 100),
+          height: Math.min(img.height / 2, canvas.height - 100),
+          rotation: 0,
+          opacity: 1,
+          locked: false,
+          constraintMode: 'free',
+          imageUrl: event.target.result
+        };
+        
+        state.elements.push(element);
+        selectElement(element);
+        render();
+        saveState();
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function addText() {
+  const element = {
+    id: state.nextId++,
+    type: 'text',
+    x: 100,
+    y: 100,
+    width: 200,
+    height: 50,
+    content: 'Double-click to edit',
+    fontFamily: 'Arial',
+    fontSize: 24,
+    color: '#000000',
+    bold: false,
+    italic: false,
+    underline: false,
+    align: 'left',
+    lineHeight: 1.2,
+    letterSpacing: 0,
+    rotation: 0,
+    opacity: 1,
+    locked: false,
+    constraintMode: 'free'
+  };
+  
+  state.elements.push(element);
+  selectElement(element);
+  render();
+  saveState();
+}
+
+function updateTextContent(e) {
+  if (state.selectedElement && state.selectedElement.type === 'text') {
+    state.selectedElement.content = e.target.value;
+    render();
+  }
+}
+
+function updateFontFamily(e) {
+  if (state.selectedElement && state.selectedElement.type === 'text') {
+    state.selectedElement.fontFamily = e.target.value;
+    render();
+    saveState();
+  }
+}
+
+function updateFontSize(e) {
+  if (state.selectedElement && state.selectedElement.type === 'text') {
+    state.selectedElement.fontSize = parseInt(e.target.value);
+    render();
+  }
+}
+
+function updateTextColor(e) {
+  if (state.selectedElement && state.selectedElement.type === 'text') {
+    state.selectedElement.color = e.target.value;
+    render();
+    saveState();
+  }
+}
+
+function updateOpacity(e) {
+  if (state.selectedElement) {
+    state.selectedElement.opacity = parseFloat(e.target.value);
+    render();
+  }
+}
+
+function updateRotation(e) {
+  if (state.selectedElement) {
+    state.selectedElement.rotation = parseInt(e.target.value);
+    document.getElementById('rotationVal').textContent = state.selectedElement.rotation + '°';
+    render();
+  }
+}
+
+function toggleBold() {
+  if (state.selectedElement && state.selectedElement.type === 'text') {
+    state.selectedElement.bold = !state.selectedElement.bold;
+    render();
+    saveState();
+  }
+}
+
+function toggleItalic() {
+  if (state.selectedElement && state.selectedElement.type === 'text') {
+    state.selectedElement.italic = !state.selectedElement.italic;
+    render();
+    saveState();
+  }
+}
+
+function toggleUnderline() {
+  if (state.selectedElement && state.selectedElement.type === 'text') {
+    state.selectedElement.underline = !state.selectedElement.underline;
+    render();
+    saveState();
+  }
+}
+
+function setAlignment(align) {
+  if (state.selectedElement && state.selectedElement.type === 'text') {
+    state.selectedElement.align = align;
+    render();
+    saveState();
+  }
+}
+
+function updateLineHeight(e) {
+  if (state.selectedElement && state.selectedElement.type === 'text') {
+    state.selectedElement.lineHeight = parseFloat(e.target.value);
+    render();
+  }
+}
+
+function updateLetterSpacing(e) {
+  if (state.selectedElement && state.selectedElement.type === 'text') {
+    state.selectedElement.letterSpacing = parseFloat(e.target.value);
+    render();
+  }
+}
+
+function updateConstraintMode(e) {
+  if (state.selectedElement) {
+    state.selectedElement.constraintMode = e.target.value;
+    saveState();
+  }
+}
+
+function duplicateElement() {
+  if (!state.selectedElement) return;
+  
+  const original = state.selectedElement;
+  const duplicate = JSON.parse(JSON.stringify(original));
+  duplicate.id = state.nextId++;
+  duplicate.x = original.x + 20;
+  duplicate.y = original.y + 20;
+  
+  state.elements.push(duplicate);
+  selectElement(duplicate);
+  render();
+  saveState();
+}
+
+function toggleLockSelected() {
+  if (state.selectedElement) {
+    state.selectedElement.locked = !state.selectedElement.locked;
+    render();
+    showElementProperties();
+    saveState();
+  }
+}
+
+function deleteSelected() {
+  if (state.selectedElement) {
+    const index = state.elements.findIndex(el => el.id === state.selectedElement.id);
+    if (index !== -1) {
+      state.elements.splice(index, 1);
+      state.selectedElement = null;
+      render();
+      showElementProperties();
+      saveState();
+    }
+  }
+}
+
+function updateLayersList() {
+  const list = document.getElementById('layersList');
+  list.innerHTML = '';
+  
+  const imageCount = state.elements.filter(el => el.type === 'image').length;
+  const header = document.createElement('div');
+  header.style.cssText = 'font-size: 11px; color: #666; margin-bottom: 8px; padding: 8px; background: #2a2a2a; border-radius: 4px;';
+  header.textContent = `Images: ${imageCount}/${MAX_IMAGES}`;
+  list.appendChild(header);
+  
+  state.elements.slice().reverse().forEach(element => {
+    const item = document.createElement('div');
+    item.className = 'layer-item';
+    if (state.selectedElement && state.selectedElement.id === element.id) {
+      item.classList.add('selected');
+    }
+    
+    const rotationText = element.rotation ? ` (${element.rotation}°)` : '';
+    
+    item.innerHTML = `
+      <div class="layer-icon">${element.type === 'image' ? '🖼' : 'T'}</div>
+      <div class="layer-info">
+        <div class="layer-name">${element.type === 'image' ? 'Image' : 'Text'} #${element.id}${rotationText}</div>
+        <div class="layer-type">${element.type}</div>
+      </div>
+      <div class="layer-controls">
+        <button class="layer-btn" title="Move Up">↑</button>
+        <button class="layer-btn" title="Move Down">↓</button>
+        <button class="layer-btn" title="Lock">${element.locked ? '🔒' : '🔓'}</button>
+      </div>
+    `;
+    
+    item.onclick = () => selectElement(element);
+    item.querySelector('.layer-controls button:nth-child(1)').onclick = (e) => { e.stopPropagation(); moveLayer(element.id, 'up'); };
+    item.querySelector('.layer-controls button:nth-child(2)').onclick = (e) => { e.stopPropagation(); moveLayer(element.id, 'down'); };
+    item.querySelector('.layer-controls button:nth-child(3)').onclick = (e) => { e.stopPropagation(); toggleLock(element.id); };
+    
+    list.appendChild(item);
+  });
+}
+
+function selectElement(element) {
+  state.selectedElement = element;
+  state.selectedSection = null;
+  renderSectionClickables();
+  render();
+  showElementProperties();
+}
+
+function showElementProperties() {
+  const props = document.getElementById('elementProperties');
+  const textProps = document.getElementById('textProperties');
+  const sectionProps = document.getElementById('sectionProperties');
+  
+  sectionProps.style.display = 'none';
+  
+  if (!state.selectedElement) {
+    props.style.display = 'none';
+    return;
+  }
+  
+  props.style.display = 'block';
+  
+  if (state.selectedElement.type === 'text') {
+    textProps.style.display = 'block';
+    document.getElementById('textContent').value = state.selectedElement.content;
+    document.getElementById('fontFamily').value = state.selectedElement.fontFamily;
+    document.getElementById('fontSize').value = state.selectedElement.fontSize;
+    document.getElementById('textColor').value = state.selectedElement.color;
+    document.getElementById('lineHeight').value = state.selectedElement.lineHeight || 1.2;
+    document.getElementById('letterSpacing').value = state.selectedElement.letterSpacing || 0;
+  } else {
+    textProps.style.display = 'none';
+  }
+  
+  document.getElementById('elementOpacity').value = state.selectedElement.opacity;
+  document.getElementById('elementRotation').value = state.selectedElement.rotation || 0;
+  document.getElementById('rotationVal').textContent = (state.selectedElement.rotation || 0) + '°';
+  document.getElementById('constraintMode').value = state.selectedElement.constraintMode || 'free';
+  document.getElementById('lockBtn').textContent = state.selectedElement.locked ? '🔒 Unlock Element' : '🔓 Lock Element';
+}
+
+function moveLayer(id, direction) {
+  const index = state.elements.findIndex(el => el.id === id);
+  if (index === -1) return;
+  
+  const newIndex = direction === 'up' ? index + 1 : index - 1;
+  if (newIndex < 0 || newIndex >= state.elements.length) return;
+  
+  [state.elements[index], state.elements[newIndex]] = [state.elements[newIndex], state.elements[index]];
+  render();
+  saveState();
+}
+
+function toggleLock(id) {
+  const element = state.elements.find(el => el.id === id);
+  if (element) {
+    element.locked = !element.locked;
+    render();
+    saveState();
+  }
+}
+
+function saveState() {
+  const snapshot = JSON.stringify({
+    card: state.card,
+    sections: state.sections.map(s => ({ ...s, bgImage: null })),
+    elements: state.elements.map(el => ({ ...el, imageData: undefined }))
+  });
+  
+  state.history = state.history.slice(0, state.historyIndex + 1);
+  state.history.push(snapshot);
+  state.historyIndex++;
+  
+  if (state.history.length > 50) {
+    state.history.shift();
+    state.historyIndex--;
+  }
+  
+  updateUndoRedo();
+}
+
+function undo() {
+  if (state.historyIndex > 0) {
+    state.historyIndex--;
+    restoreState(state.history[state.historyIndex]);
+  }
+}
+
+function redo() {
+  if (state.historyIndex < state.history.length - 1) {
+    state.historyIndex++;
+    restoreState(state.history[state.historyIndex]);
+  }
+}
+
+function restoreState(snapshot) {
+  const data = JSON.parse(snapshot);
+  state.card = data.card;
+  state.sections = data.sections;
+  state.elements = data.elements;
+  state.selectedElement = null;
+  state.selectedSection = null;
+  
+  document.getElementById('cardWidth').value = state.card.width;
+  document.getElementById('cardHeight').value = state.card.height;
+  document.getElementById('gridRows').value = state.card.rows;
+  document.getElementById('gridCols').value = state.card.cols;
+  
+  updateCanvasSize();
+  renderSectionBorders();
+  renderSectionClickables();
+  renderSectionResizeHandles();
+  render();
+  updateUndoRedo();
+}
+
+function updateUndoRedo() {
+  document.getElementById('undoBtn').disabled = state.historyIndex <= 0;
+  document.getElementById('redoBtn').disabled = state.historyIndex >= state.history.length - 1;
+}
+
+function saveDesign() {
+  const design = {
+    version: '2.4-ENHANCED',
+    card: state.card,
+    sections: state.sections.map(s => ({ ...s, bgImage: null })),
+    elements: state.elements.map(el => ({ ...el, imageData: undefined }))
+  };
+  
+  const blob = new Blob([JSON.stringify(design, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `card-design-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function loadDesign() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const design = JSON.parse(event.target.result);
+        state.card = design.card;
+        state.sections = design.sections;
+        state.elements = design.elements || [];
+        state.selectedElement = null;
+        state.selectedSection = null;
+        
+        document.getElementById('cardWidth').value = state.card.width;
+        document.getElementById('cardHeight').value = state.card.height;
+        document.getElementById('gridRows').value = state.card.rows;
+        document.getElementById('gridCols').value = state.card.cols;
+        
+        updateCanvasSize();
+        renderSectionBorders();
+        renderSectionClickables();
+        renderSectionResizeHandles();
+        render();
+        saveState();
+      } catch (err) {
+        alert('Error loading design: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+async function exportJPG() {
+  try {
+    document.getElementById('measureX').style.display = 'none';
+    document.getElementById('measureY').style.display = 'none';
+    document.getElementById('sectionsLayer').style.display = 'none';
+    document.getElementById('sectionResizeHandles').style.display = 'none';
+    const transformHandles = document.getElementById('transformHandles');
+    if (transformHandles) transformHandles.style.display = 'none';
+    
+    document.querySelectorAll('.element-overlay.selected').forEach(el => {
+      el.classList.remove('selected');
+    });
+    
+    const canvasWrap = document.getElementById('canvasWrapper');
+    const dataUrl = await html2canvas(canvasWrap, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      logging: false,
+      useCORS: true
+    }).then(canvas => canvas.toDataURL('image/jpeg', 0.95));
+    
+    const link = document.createElement('a');
+    link.download = `card-design-${Date.now()}.jpg`;
+    link.href = dataUrl;
+    link.click();
+    
+    document.getElementById('measureX').style.display = '';
+    document.getElementById('measureY').style.display = '';
+    document.getElementById('sectionsLayer').style.display = '';
+    document.getElementById('sectionResizeHandles').style.display = '';
+    if (transformHandles) transformHandles.style.display = '';
+    render();
+    
+    console.log('✅ JPG export complete');
+  } catch (err) {
+    alert('Export failed: ' + err.message);
+    console.error(err);
+  }
+}
+
+async function exportPDF() {
+  try {
+    const { jsPDF } = window.jspdf;
+    
+    document.getElementById('measureX').style.display = 'none';
+    document.getElementById('measureY').style.display = 'none';
+    document.getElementById('sectionsLayer').style.display = 'none';
+    document.getElementById('sectionResizeHandles').style.display = 'none';
+    const transformHandles = document.getElementById('transformHandles');
+    if (transformHandles) transformHandles.style.display = 'none';
+    
+    document.querySelectorAll('.element-overlay.selected').forEach(el => {
+      el.classList.remove('selected');
+    });
+    
+    const canvasWrap = document.getElementById('canvasWrapper');
+    const dataUrl = await html2canvas(canvasWrap, {
+      backgroundColor: '#ffffff',
+      scale: 3,
+      logging: false,
+      useCORS: true
+    }).then(canvas => canvas.toDataURL('image/png'));
+    
+    const widthMM = state.card.width * 10;
+    const heightMM = state.card.height * 10;
+    
+    const pdf = new jsPDF({
+      orientation: widthMM > heightMM ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: [widthMM, heightMM]
+    });
+    
+    pdf.addImage(dataUrl, 'PNG', 0, 0, widthMM, heightMM);
+    pdf.save(`card-design-${Date.now()}.pdf`);
+    
+    document.getElementById('measureX').style.display = '';
+    document.getElementById('measureY').style.display = '';
+    document.getElementById('sectionsLayer').style.display = '';
+    document.getElementById('sectionResizeHandles').style.display = '';
+    if (transformHandles) transformHandles.style.display = '';
+    render();
+    
+    console.log('✅ PDF export complete');
+  } catch (err) {
+    alert('Export failed: ' + err.message);
+    console.error(err);
+  }
+}
+
+async function exportPrintReadyPDF() {
+  try {
+    const { jsPDF } = window.jspdf;
+    
+    document.getElementById('measureX').style.display = 'none';
+    document.getElementById('measureY').style.display = 'none';
+    document.getElementById('sectionsLayer').style.display = 'none';
+    document.getElementById('sectionResizeHandles').style.display = 'none';
+    const transformHandles = document.getElementById('transformHandles');
+    if (transformHandles) transformHandles.style.display = 'none';
+    
+    document.querySelectorAll('.element-overlay.selected').forEach(el => {
+      el.classList.remove('selected');
+    });
+    
+    const canvasWrap = document.getElementById('canvasWrapper');
+    const dataUrl = await html2canvas(canvasWrap, {
+      backgroundColor: '#ffffff',
+      scale: 4,
+      logging: false,
+      useCORS: true
+    }).then(canvas => canvas.toDataURL('image/png'));
+    
+    const cardWidthMM = state.card.width * 10;
+    const cardHeightMM = state.card.height * 10;
+    const bleed = 3;
+    const totalWidth = cardWidthMM + (bleed * 2);
+    const totalHeight = cardHeightMM + (bleed * 2);
+    
+    const pdf = new jsPDF({
+      orientation: totalWidth > totalHeight ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: [totalWidth, totalHeight]
+    });
+    
+    pdf.addImage(dataUrl, 'PNG', bleed, bleed, cardWidthMM, cardHeightMM);
+    
+    const cropLength = 5;
+    const cropOffset = 2;
+    
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(0.1);
+    pdf.line(bleed - cropOffset, 0, bleed - cropOffset, cropLength);
+    pdf.line(0, bleed - cropOffset, cropLength, bleed - cropOffset);
+    
+    pdf.line(totalWidth - bleed + cropOffset, 0, totalWidth - bleed + cropOffset, cropLength);
+    pdf.line(totalWidth - cropLength, bleed - cropOffset, totalWidth, bleed - cropOffset);
+    
+    pdf.line(bleed - cropOffset, totalHeight - cropLength, bleed - cropOffset, totalHeight);
+    pdf.line(0, totalHeight - bleed + cropOffset, cropLength, totalHeight - bleed + cropOffset);
+    
+    pdf.line(totalWidth - bleed + cropOffset, totalHeight - cropLength, totalWidth - bleed + cropOffset, totalHeight);
+    pdf.line(totalWidth - cropLength, totalHeight - bleed + cropOffset, totalWidth, totalHeight - bleed + cropOffset);
+    
+    pdf.setProperties({
+      title: 'Print-Ready Card Design',
+      subject: 'Card with 3mm bleed and crop marks',
+      author: 'Universal Card Designer',
+      keywords: 'print-ready, bleed, crop marks',
+      creator: 'Universal Card Designer Enhanced v2.4'
+    });
+    
+    pdf.save(`card-design-print-ready-${Date.now()}.pdf`);
+    
+    document.getElementById('measureX').style.display = '';
+    document.getElementById('measureY').style.display = '';
+    document.getElementById('sectionsLayer').style.display = '';
+    document.getElementById('sectionResizeHandles').style.display = '';
+    if (transformHandles) transformHandles.style.display = '';
+    render();
+    
+    console.log('✅ Print-ready PDF export complete');
+  } catch (err) {
+    alert('Export failed: ' + err.message);
+    console.error(err);
+  }
+}
+
+
+// ZOOM FUNCTIONALITY
+function setZoom(zoomLevel) {
+  state.zoomLevel = Math.max(25, Math.min(200, zoomLevel));
+  const wrapper = document.getElementById('canvasWrapper');
+  const scale = state.zoomLevel / 100;
+  wrapper.style.transform = 'scale(' + scale + ')';
+  wrapper.style.transformOrigin = 'center center';
+  document.getElementById('zoomSlider').value = state.zoomLevel;
+  document.getElementById('zoomValue').textContent = state.zoomLevel + '%';
+}
+
+function handleZoomSlider(e) {
+  setZoom(parseInt(e.target.value));
+}
+
+function zoomIn() {
+  setZoom(state.zoomLevel + 10);
+}
+
+function zoomOut() {
+  setZoom(state.zoomLevel - 10);
+}
+
+function fitToScreen() {
+  const container = document.querySelector('.canvas-container');
+  const containerWidth = container.clientWidth - 80;
+  const containerHeight = container.clientHeight - 120;
+  const scaleX = containerWidth / canvas.width;
+  const scaleY = containerHeight / canvas.height;
+  const optimalScale = Math.min(scaleX, scaleY, 1);
+  setZoom(Math.round(optimalScale * 100));
+}
+
+init();
+console.log('✅ Universal Card Designer Enhanced v2.4 loaded!');
+console.log('🆕 NEW: Image rotation (0-360°) + Section grid resizing (drag dividers)');
+
+</script>
+
+</body>
+</html>
