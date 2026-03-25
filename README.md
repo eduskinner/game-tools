@@ -1095,6 +1095,13 @@ Common error codes:
 
 
 ================================================================================
+CONFLICT OF HEROES - SOLO RULES TUTORIAL HELPER
+================================================================================
+
+This creates an 8 steop tutorial to play Conflict of Hereos (Awakening the Bear 3rd edition) using the SOLO expansion
+Just download the HTML file and open it on any browser.
+
+================================================================================
 LICENSE
 ================================================================================
 
