@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conflict of Heroes: Awakening the Bear — Solo Field Manual</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Raleway:wght@300;400;600;700;900&family=Source+Code+Pro:wght@400;600&display=swap');
+
+  :root {
+    --ink: #1a1208;
+    --paper: #f5edd8;
+    --paper-dark: #e8d9b8;
+    --olive: #4a5240;
+    --olive-light: #6b7561;
+    --olive-dim: #8a9480;
+    --red: #9b2020;
+    --red-light: #c0392b;
+    --blue: #1a3a5c;
+    --blue-light: #2e6da4;
+    --gold: #b8860b;
+    --gold-light: #d4a017;
+    --cream: #faf4e8;
+    --shadow: rgba(0,0,0,0.35);
+    --border: #c8b88a;
+    --ai-purple: #5a3a6e;
+    --ai-purple-light: #7a5090;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #2a2a1e;
+    font-family: 'Raleway', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px);
+  }
+
+  .main-header {
+    background: linear-gradient(180deg, #1a1208 0%, #2d2410 60%, #3a2e14 100%);
+    padding: 2.5rem 2rem 2rem;
+    text-align: center;
+    border-bottom: 4px solid var(--gold);
+    position: relative;
+    overflow: hidden;
+  }
+  .main-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.01) 10px, rgba(255,255,255,0.01) 11px);
+  }
+  .header-badge {
+    display: inline-block;
+    border: 2px solid var(--gold);
+    padding: 0.3rem 1.2rem;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .solo-badge {
+    display: inline-block;
+    background: var(--ai-purple);
+    border: 2px solid var(--ai-purple-light);
+    padding: 0.2rem 1rem;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: #d8b8f0;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    margin-left: 0.5rem;
+    border-radius: 2px;
+  }
+  .main-header h1 {
+    font-family: 'Special Elite', cursive;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    color: var(--paper);
+    letter-spacing: 0.04em;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+    line-height: 1.2;
+  }
+  .main-header h1 span {
+    color: var(--gold-light);
+    display: block;
+    font-size: 0.6em;
+    letter-spacing: 0.15em;
+  }
+  .header-subtitle {
+    margin-top: 0.8rem;
+    color: var(--olive-dim);
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    font-family: 'Source Code Pro', monospace;
+  }
+  .header-subtitle span {
+    color: #d8b8f0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .progress-section {
+    background: #1a1208;
+    border-bottom: 2px solid var(--gold);
+    padding: 1rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+  }
+  .progress-label {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.7rem;
+    color: var(--gold-light);
+    letter-spacing: 0.1em;
+  }
+  .progress-dots {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .prog-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--olive);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.6rem; font-weight: 600;
+    color: var(--olive);
+    transition: all 0.2s;
+    background: transparent;
+  }
+  .prog-dot:hover { border-color: var(--gold-light); color: var(--gold-light); }
+  .prog-dot.active { border-color: var(--gold); color: var(--paper); background: var(--gold); }
+  .prog-dot.done { border-color: var(--olive-light); color: var(--olive-light); background: rgba(74,82,64,0.3); }
+
+  .module { display: none; animation: fadeIn 0.4s ease; }
+  .module.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform:none; } }
+
+  .module-header {
+    background: linear-gradient(135deg, var(--olive) 0%, var(--olive-light) 100%);
+    border-radius: 4px 4px 0 0;
+    padding: 1.5rem 2rem;
+    display: flex; align-items: flex-start; gap: 1.5rem;
+    border: 2px solid var(--border);
+    border-bottom: none;
+  }
+  .module-num {
+    font-family: 'Special Elite', cursive;
+    font-size: 3rem; line-height: 1;
+    color: var(--gold-light); opacity: 0.8;
+    min-width: 60px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+  }
+  .module-title-block h2 {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.6rem; color: var(--paper); letter-spacing: 0.05em;
+  }
+  .module-title-block p { color: rgba(245,237,216,0.7); font-size: 0.85rem; margin-top: 0.3rem; font-weight: 300; }
+
+  .module-body {
+    background: var(--paper);
+    border: 2px solid var(--border); border-top: none;
+    border-radius: 0 0 4px 4px;
+    padding: 2rem;
+  }
+
+  /* AI CALLOUT — special purple box for all Athena AI specific rules */
+  .ai-box {
+    background: linear-gradient(135deg, #2e1a3a 0%, #3d2250 100%);
+    border: 2px solid var(--ai-purple-light);
+    border-radius: 6px;
+    padding: 1rem 1.3rem;
+    margin: 0.8rem 0;
+    position: relative;
+  }
+  .ai-box::before {
+    content: '🤖 ATHENA AI — SOLO RULE';
+    position: absolute;
+    top: -11px; left: 14px;
+    background: var(--ai-purple);
+    color: #e0c8f8;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 1px 8px;
+    border-radius: 2px;
+  }
+  .ai-box strong {
+    display: block;
+    color: #d8b8f0;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
+    margin-top: 0.3rem;
+  }
+  .ai-box p { color: #e8d8f8; font-size: 0.87rem; line-height: 1.7; margin-bottom: 0.4rem; }
+  .ai-box p:last-child { margin-bottom: 0; }
+
+  .section-block { margin-bottom: 1.8rem; }
+  .section-block h3 {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.1rem; color: var(--olive);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0.4rem; margin-bottom: 0.9rem;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .section-block p { line-height: 1.75; font-size: 0.9rem; color: #2a2010; margin-bottom: 0.6rem; }
+
+  .rule-box {
+    background: var(--paper-dark);
+    border-left: 4px solid var(--olive);
+    padding: 0.8rem 1.2rem;
+    border-radius: 0 4px 4px 0;
+    margin: 0.8rem 0;
+  }
+  .rule-box.red { border-left-color: var(--red); background: #fdf0f0; }
+  .rule-box.blue { border-left-color: var(--blue); background: #f0f4fc; }
+  .rule-box.gold { border-left-color: var(--gold); background: #fdf8e8; }
+  .rule-box strong {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.8rem; letter-spacing: 0.05em;
+    display: block; margin-bottom: 0.3rem; color: var(--olive);
+  }
+  .rule-box.red strong { color: var(--red); }
+  .rule-box.blue strong { color: var(--blue); }
+  .rule-box.gold strong { color: var(--gold); }
+  .rule-box p { font-size: 0.88rem; margin: 0; }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+    gap: 0.8rem; margin: 1rem 0;
+  }
+  .stat-card {
+    background: var(--paper-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.8rem 1rem; text-align: center;
+  }
+  .stat-card .stat-name { font-family: 'Source Code Pro', monospace; font-size: 0.7rem; letter-spacing: 0.08em; color: var(--olive-light); text-transform: uppercase; margin-bottom: 0.3rem; }
+  .stat-card .stat-val { font-size: 1.4rem; font-weight: 700; color: var(--ink); }
+  .stat-card.red-stat .stat-val { color: var(--red); }
+  .stat-card.blue-stat .stat-val { color: var(--blue); }
+  .stat-card.purple-stat .stat-val { color: var(--ai-purple); }
+
+  /* Order Card visual */
+  .order-card-display {
+    display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1rem 0;
+  }
+  .order-card {
+    width: 110px; min-height: 160px;
+    border: 2px solid #555;
+    border-radius: 6px;
+    background: linear-gradient(160deg, #f0e8d0 0%, #ddd0a8 100%);
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.6rem;
+    flex-shrink: 0;
+    box-shadow: 3px 3px 8px rgba(0,0,0,0.35);
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .oc-header {
+    background: var(--ai-purple);
+    color: #e0c8f8;
+    text-align: center;
+    padding: 4px 6px;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .oc-header.red-head { background: var(--red); color: white; }
+  .oc-header.blue-head { background: var(--blue); color: white; }
+  .oc-body { padding: 6px 8px; }
+  .oc-section {
+    border-top: 1px solid rgba(0,0,0,0.15);
+    padding-top: 4px;
+    margin-top: 4px;
+    font-size: 0.58rem;
+    color: #3a2a10;
+    line-height: 1.5;
+  }
+  .oc-label { font-weight: 700; color: var(--olive); display: block; }
+  .oc-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--ink);
+    color: var(--gold-light);
+    text-align: center;
+    padding: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+  .order-legend {
+    flex: 1; min-width: 200px;
+    font-size: 0.82rem; line-height: 1.6; color: #3a2a10;
+  }
+  .order-legend h4 { font-family: 'Special Elite', cursive; font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--ai-purple); }
+  .legend-row { display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 0.35rem; }
+  .legend-pos {
+    font-family: 'Source Code Pro', monospace; font-size: 0.68rem;
+    background: var(--olive); color: white;
+    padding: 1px 5px; border-radius: 2px; white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+  }
+  .legend-pos.purple { background: var(--ai-purple); }
+  .legend-pos.red { background: var(--red); }
+  .legend-pos.blue { background: var(--blue); }
+
+  /* Unit counter */
+  .unit-showcase { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1rem 0; }
+  .unit-counter {
+    width: 100px; height: 100px;
+    border: 3px solid #555; border-top: 8px solid #3a7d3a;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #d8c89a 0%, #c8b880 100%);
+    position: relative; font-family: 'Source Code Pro', monospace;
+    font-size: 0.65rem; flex-shrink: 0;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+  }
+  .unit-counter .u-top { display: flex; justify-content: space-between; padding: 2px 4px; border-bottom: 1px solid rgba(0,0,0,0.2); }
+  .unit-counter .u-name { text-align: center; padding: 4px 2px; font-size: 0.6rem; font-weight: 600; }
+  .unit-counter .u-bottom { display: flex; justify-content: space-between; padding: 2px 4px; border-top: 1px solid rgba(0,0,0,0.2); position: absolute; bottom: 4px; left: 0; right: 0; }
+  .u-red { color: #9b2020; font-weight: 700; }
+  .u-blue { color: #1a3a5c; font-weight: 700; }
+  .u-range { background: #2a5c2a; color: white; padding: 1px 3px; border-radius: 2px; font-size: 0.55rem; }
+  .unit-legend { flex: 1; min-width: 200px; font-size: 0.82rem; line-height: 1.6; color: #3a2a10; }
+  .unit-legend h4 { font-family: 'Special Elite', cursive; font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--olive); }
+
+  .scenario {
+    background: linear-gradient(135deg, #1e2a18 0%, #2a3820 100%);
+    border: 2px solid var(--gold); border-radius: 6px;
+    padding: 1.5rem; margin: 1.5rem 0; position: relative;
+  }
+  .scenario::before {
+    content: '▶ SOLO TRAINING SCENARIO';
+    position: absolute; top: -12px; left: 20px;
+    background: var(--gold); color: var(--ink);
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em;
+    padding: 2px 10px; border-radius: 2px;
+  }
+  .scenario h4 { font-family: 'Special Elite', cursive; color: var(--gold-light); font-size: 1.1rem; margin-bottom: 0.8rem; }
+  .scenario p { color: var(--paper-dark); font-size: 0.88rem; line-height: 1.7; margin-bottom: 0.5rem; }
+  .scenario-step { background: rgba(0,0,0,0.3); border-left: 3px solid var(--gold-light); padding: 0.6rem 1rem; margin: 0.5rem 0; border-radius: 0 4px 4px 0; }
+  .scenario-step .step-num { font-family: 'Source Code Pro', monospace; font-size: 0.65rem; color: var(--gold-light); letter-spacing: 0.1em; margin-bottom: 0.2rem; }
+  .scenario-step p { margin: 0; font-size: 0.86rem; }
+  .scenario-step.ai-step { border-left-color: var(--ai-purple-light); }
+  .scenario-step.ai-step .step-num { color: #d8b8f0; }
+
+  .formula {
+    background: var(--ink); color: var(--gold-light);
+    font-family: 'Source Code Pro', monospace; font-size: 0.88rem;
+    padding: 0.8rem 1.4rem; border-radius: 4px;
+    margin: 0.8rem 0; text-align: center; letter-spacing: 0.05em;
+  }
+  .formula .eq { color: var(--paper); font-size: 0.8em; }
+  .formula.ai { border: 2px solid var(--ai-purple-light); }
+
+  .terrain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.8rem 0; }
+  .terrain-item { background: var(--paper-dark); border: 1px solid var(--border); border-radius: 3px; padding: 0.5rem 0.8rem; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center; }
+  .terrain-item .t-name { font-weight: 600; color: var(--olive); }
+  .terrain-item .t-mod { font-family: 'Source Code Pro', monospace; font-size: 0.75rem; color: var(--blue); font-weight: 600; }
+  .terrain-item .t-mod.red { color: var(--red); }
+
+  .hit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.6rem; margin: 0.8rem 0; }
+  .hit-card { background: var(--paper-dark); border: 1px solid var(--border); border-radius: 4px; padding: 0.6rem 0.8rem; font-size: 0.8rem; }
+  .hit-card .hit-name { font-family: 'Special Elite', cursive; font-size: 0.9rem; color: var(--red); margin-bottom: 0.3rem; border-bottom: 1px solid var(--border); padding-bottom: 0.2rem; }
+  .hit-card .hit-effect { color: #3a2010; line-height: 1.5; }
+  .hit-card .rally-num { font-family: 'Source Code Pro', monospace; font-size: 0.7rem; color: var(--blue); margin-top: 0.3rem; }
+
+  .cap-table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.85rem; }
+  .cap-table th { background: var(--olive); color: var(--paper); padding: 0.5rem 0.8rem; text-align: left; font-family: 'Source Code Pro', monospace; font-size: 0.75rem; letter-spacing: 0.05em; }
+  .cap-table td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border); }
+  .cap-table tr:nth-child(even) td { background: rgba(0,0,0,0.04); }
+
+  .turn-flow { display: flex; gap: 0; margin: 1rem 0; flex-wrap: wrap; }
+  .tf-step { flex: 1; min-width: 100px; background: var(--paper-dark); border: 1px solid var(--border); padding: 0.7rem 0.8rem; text-align: center; font-size: 0.78rem; position: relative; }
+  .tf-step:not(:last-child)::after { content: '→'; position: absolute; right: -8px; top: 50%; transform: translateY(-50%); color: var(--gold); font-size: 1rem; z-index: 1; background: var(--paper-dark); }
+  .tf-step .ts-num { font-family: 'Source Code Pro', monospace; font-size: 0.65rem; color: var(--olive-light); display: block; margin-bottom: 0.2rem; }
+  .tf-step .ts-name { font-weight: 600; color: var(--ink); }
+  .tf-step.ai-step { background: #f0eaf8; border-color: var(--ai-purple-light); }
+  .tf-step.ai-step .ts-num { color: var(--ai-purple); }
+  .tf-step.ai-step::after { color: var(--ai-purple-light); }
+
+  .nav-buttons { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; gap: 1rem; }
+  .btn { font-family: 'Source Code Pro', monospace; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.7rem 1.5rem; border: 2px solid; border-radius: 3px; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+  .btn-prev { border-color: var(--olive); color: var(--olive); background: transparent; }
+  .btn-prev:hover { background: var(--olive); color: var(--paper); }
+  .btn-next { border-color: var(--gold); color: var(--ink); background: var(--gold); }
+  .btn-next:hover { background: var(--gold-light); border-color: var(--gold-light); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .module-counter { font-family: 'Source Code Pro', monospace; font-size: 0.75rem; color: var(--olive-dim); }
+
+  .checklist { list-style: none; margin: 0.8rem 0; }
+  .checklist li { padding: 0.4rem 0.8rem; border-bottom: 1px dashed var(--border); font-size: 0.87rem; display: flex; gap: 0.6rem; align-items: flex-start; }
+  .checklist li::before { content: '→'; color: var(--gold); font-weight: 700; flex-shrink: 0; }
+  .checklist li.ai-li::before { content: '🤖'; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 0.8rem 0; }
+
+  .summary-bar { background: var(--ink); color: var(--gold-light); padding: 0.6rem 1.2rem; border-radius: 4px; font-family: 'Source Code Pro', monospace; font-size: 0.78rem; margin: 1rem 0; line-height: 1.7; }
+  .summary-bar .sb-title { color: var(--paper); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; }
+
+  @media (max-width: 600px) {
+    .two-col { grid-template-columns: 1fr; }
+    .terrain-grid { grid-template-columns: 1fr; }
+    .hit-grid { grid-template-columns: 1fr 1fr; }
+  }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #1a1208; }
+  ::-webkit-scrollbar-thumb { background: var(--olive); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="main-header">
+  <div>
+    <div class="header-badge">Third Edition — Field Manual</div>
+    <div class="solo-badge">⚡ Eastern Front Solo Expansion — Athena AI</div>
+  </div>
+  <h1>Conflict of Heroes<span>Awakening the Bear!</span></h1>
+  <p class="header-subtitle">Progressive Solo Learning Guide · <span>You vs. the Athena AI</span></p>
+</div>
+
+<div class="progress-section">
+  <div class="container" style="padding-top:0;padding-bottom:0;">
+    <div class="progress-header">
+      <span class="progress-label">▶ SOLO MISSION BRIEFINGS</span>
+      <span class="progress-label" id="prog-label">Module 1 of 10</span>
+    </div>
+    <div class="progress-dots">
+      <div class="prog-dot active" onclick="goTo(0)" title="Overview">01</div>
+      <div class="prog-dot" onclick="goTo(1)" title="Solo Game Flow">02</div>
+      <div class="prog-dot" onclick="goTo(2)" title="Order Cards & Spent">03</div>
+      <div class="prog-dot" onclick="goTo(3)" title="Movement">04</div>
+      <div class="prog-dot" onclick="goTo(4)" title="Fire Zone">05</div>
+      <div class="prog-dot" onclick="goTo(5)" title="Combat">06</div>
+      <div class="prog-dot" onclick="goTo(6)" title="Hits & Rally">07</div>
+      <div class="prog-dot" onclick="goTo(7)" title="CAPs">08</div>
+      <div class="prog-dot" onclick="goTo(8)" title="Mission Track & Cards">09</div>
+      <div class="prog-dot" onclick="goTo(9)" title="Advanced Rules">10</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== MODULE 1: OVERVIEW ===== -->
+<div class="module active" id="mod-0">
+  <div class="module-header">
+    <div class="module-num">01</div>
+    <div class="module-title-block">
+      <h2>The Big Picture</h2>
+      <p>What the solo game is, what's in both boxes, and how a solo firefight works</p>
+    </div>
+  </div>
+  <div class="module-body">
+
+    <div class="section-block">
+      <h3><span class="icon">🎯</span> What Is This Game?</h3>
+      <p>Conflict of Heroes is a tactical WWII wargame set at platoon-to-company scale on the Eastern Front in 1941. <strong>In solo mode</strong>, you command one side — Germans or Soviets — and the <strong>Athena AI</strong> (from the Eastern Front Solo Expansion) runs the other side automatically via a deck of Order Cards.</p>
+      <p>The core rhythm: you take an action with one of your units, then flip an Order Card to resolve both your Spent Check and the AI's next move. The result is a fluid, tense back-and-forth against an intelligent opponent you cannot fully predict.</p>
+    </div>
+
+    <div class="ai-box">
+      <strong>WHAT THE SOLO EXPANSION ADDS</strong>
+      <p>The Eastern Front Solo Expansion contains everything needed to play against the Athena AI:</p>
+      <p>• <strong>Order Cards</strong> — the heart of the solo system (AI brain + your Spent Check in one flip)<br>
+      • <strong>Rumored Enemy (RE) Counters</strong> — fog-of-war placeholders for AI units you haven't confirmed yet<br>
+      • <strong>Mission Track</strong> — a dynamic event timer that replaces fixed Rounds<br>
+      • <strong>Solo Track Sheet</strong> — tracks VPs and CAPs for your solo session<br>
+      • <strong>Solo Scenarios &amp; Campaigns</strong> — dedicated solo firefights (the base game's 2-player missions are NOT directly playable solo without adaptation)</p>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">📦</span> Key Components at a Glance</h3>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-name">Unit Counters</div>
+          <div class="stat-val">~60+</div>
+          <div style="font-size:0.75rem;color:#666;margin-top:4px">Infantry, Tanks, Guns</div>
+        </div>
+        <div class="stat-card purple-stat">
+          <div class="stat-name">Order Cards</div>
+          <div class="stat-val">AI Deck</div>
+          <div style="font-size:0.75rem;color:#666;margin-top:4px">Spent Check + AI action</div>
+        </div>
+        <div class="stat-card purple-stat">
+          <div class="stat-name">Rumored Enemy</div>
+          <div class="stat-val">RE counters</div>
+          <div style="font-size:0.75rem;color:#666;margin-top:4px">Hidden AI fog-of-war</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-name">Maps</div>
+          <div class="stat-val">5</div>
+          <div style="font-size:0.75rem;color:#666;margin-top:4px">Modular hex maps</div>
+        </div>
+        <div class="stat-card red-stat">
+          <div class="stat-name">Hit Markers</div>
+          <div class="stat-val">Face-down</div>
+          <div style="font-size:0.75rem;color:#666;margin-top:4px">Hidden effects</div>
+        </div>
+        <div class="stat-card blue-stat">
+          <div class="stat-name">Battle Cards</div>
+          <div class="stat-val">19</div>
+          <div style="font-size:0.75rem;color:#666;margin-top:4px">Your tactical edge</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🗺️</span> Reading a Unit Counter</h3>
+      <div class="unit-showcase">
+        <div class="unit-counter">
+          <div class="u-top"><span class="u-red">3</span><span style="font-size:0.6rem">1</span></div>
+          <div class="u-name">Rifles '41</div>
+          <div style="text-align:center;padding:4px;"><span class="u-red">5</span> / <span class="u-red">3</span></div>
+          <div class="u-bottom"><span class="u-red">3</span><span class="u-range">3</span><span class="u-red">12</span></div>
+        </div>
+        <div class="unit-legend">
+          <h4>Unit Counter — German Rifles '41</h4>
+          <div class="legend-row"><span class="legend-pos">TOP LEFT</span> Attack Cost (3 Action Points to fire)</div>
+          <div class="legend-row"><span class="legend-pos">TOP RIGHT</span> Move Cost (1 Action Point to move)</div>
+          <div class="legend-row"><span class="legend-pos" style="background:var(--red)">BOT LEFT</span> <span class="u-red">Red FP</span> vs Soft / <span class="u-blue">Blue FP</span> vs Armor</div>
+          <div class="legend-row"><span class="legend-pos" style="background:#666">BOT CTR</span> Range (attack up to 2× this distance)</div>
+          <div class="legend-row"><span class="legend-pos" style="background:var(--red)">BOT RIGHT</span> Front Defense / Flank Defense</div>
+          <div class="legend-row"><span class="legend-pos" style="background:#3a7d3a">GREEN BAR</span> Direction the unit is facing (crucial!)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">⚔️</span> Solo Firefight Structure</h3>
+      <ul class="checklist">
+        <li><strong>Setup</strong> — Place map, your units, AI units (and Rumored Enemy counters), CAP markers, Hit Marker pile, Mission Track</li>
+        <li class="ai-li"><strong>Your Turn:</strong> Take one action with a unit → flip an Order Card → resolve Spent Check → resolve AI action</li>
+        <li class="ai-li"><strong>Mission Track:</strong> Certain Order Card results advance the Mission Marker — triggering events and ending the firefight</li>
+        <li><strong>Victory Points</strong> are tracked on the Solo Track Sheet — control objectives, destroy AI units</li>
+        <li><strong>Firefight ends</strong> when the Mission Marker hits the last space — whoever has VP advantage wins</li>
+      </ul>
+    </div>
+
+    <div class="rule-box gold">
+      <strong>💡 KEY CONCEPT: FRESH vs. SPENT</strong>
+      <p>Every unit is either <strong>Fresh</strong> (green bar face-up) or <strong>Spent</strong> (red bar face-up). Fresh units can always act. Spent units need CAPs to act. In solo mode, whether your unit becomes Spent is determined by flipping an Order Card — not by rolling a d10. Stats are identical on both sides.</p>
+    </div>
+
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-prev" disabled>← Previous</button>
+    <span class="module-counter">1 / 10</span>
+    <button class="btn btn-next" onclick="goTo(1)">Next: Solo Game Flow →</button>
+  </div>
+</div>
+
+<!-- ===== MODULE 2: SOLO GAME FLOW ===== -->
+<div class="module" id="mod-1">
+  <div class="module-header">
+    <div class="module-num">02</div>
+    <div class="module-title-block">
+      <h2>Solo Game Flow</h2>
+      <p>How a turn works in solo — your action, then the Order Card, then the AI reacts</p>
+    </div>
+  </div>
+  <div class="module-body">
+
+    <div class="section-block">
+      <h3><span class="icon">🔄</span> The Solo Turn Sequence</h3>
+      <p>Unlike the 2-player game where turns strictly alternate, in solo mode your turn and the AI's response are linked by a single Order Card flip. Here's the full flow:</p>
+      <div class="turn-flow">
+        <div class="tf-step"><span class="ts-num">YOUR STEP 1</span><span class="ts-name">Select a Fresh Unit</span></div>
+        <div class="tf-step"><span class="ts-num">YOUR STEP 2</span><span class="ts-name">Perform an Action</span></div>
+        <div class="tf-step ai-step"><span class="ts-num">SHARED STEP 3</span><span class="ts-name">Flip Order Card</span></div>
+        <div class="tf-step"><span class="ts-num">YOUR STEP 4</span><span class="ts-name">Resolve Spent Check</span></div>
+        <div class="tf-step ai-step"><span class="ts-num">AI STEP 5</span><span class="ts-name">Resolve AI Action</span></div>
+      </div>
+      <p>The Order Card simultaneously tells you <em>if your unit is Spent</em> and <em>what the AI does next</em>. One card flip does double duty.</p>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🃏</span> The Order Card — Your Central Tool</h3>
+      <div class="order-card-display">
+        <div class="order-card">
+          <div class="oc-header">AGGRESSIVE</div>
+          <div class="oc-body">
+            <div style="font-size:0.6rem;font-weight:700;color:#3a2010;margin-bottom:4px;">AI PRIORITY ORDER:</div>
+            <div class="oc-section">
+              <span class="oc-label">FIRE:</span>
+              Closest AI to a Unit → Short Range attack
+            </div>
+            <div class="oc-section">
+              <span class="oc-label">MOVE:</span>
+              Closest AI → Move towards Unit
+            </div>
+            <div class="oc-section">
+              <span class="oc-label">IF NONE:</span>
+              AI Passes
+            </div>
+          </div>
+          <div class="oc-bottom">AP SPENT # : 4</div>
+        </div>
+        <div class="order-legend">
+          <h4>Reading an Order Card</h4>
+          <div class="legend-row"><span class="legend-pos purple">HEADER</span> AI personality for this card (Aggressive, Defensive, etc.) — some headers are blue, meaning the AI unit activated does NOT make a Spent Check</div>
+          <div class="legend-row"><span class="legend-pos">BODY</span> Priority list of actions the AI will attempt, in order — work down the list until one is possible</div>
+          <div class="legend-row"><span class="legend-pos red">AP # BOTTOM</span> The <strong>AP Spent Number</strong> — compare your unit's action cost to this to determine if YOUR unit is Spent</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-box">
+      <strong>HOW YOUR SPENT CHECK WORKS IN SOLO</strong>
+      <p>After you act, look at the <strong>AP Spent Number</strong> at the bottom of the flipped Order Card.</p>
+      <p>• If your Action Cost <strong>≥ AP Spent Number</strong> → your unit becomes <strong>Spent</strong> (flip to red bar side)<br>
+      • If your Action Cost <strong>&lt; AP Spent Number</strong> → your unit <strong>stays Fresh</strong></p>
+      <p>Example: You move a unit (1AP). The Order Card shows AP Spent # 4. Since 1 &lt; 4, your unit stays Fresh. But if you attacked with a 4AP action and the card shows AP Spent # 4, then 4 ≥ 4 → Spent!</p>
+      <p>You can spend CAPs to lower your action cost before acting, reducing the chance of becoming Spent — just as in the 2-player game.</p>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🤖</span> How the Athena AI Takes Its Turn</h3>
+      <p>After your Spent Check, the Order Card body tells the AI what to do. The AI always works through the priority list on the card from top to bottom, taking the first action it can legally perform:</p>
+      <ul class="checklist">
+        <li class="ai-li">The AI selects a unit based on the card's criteria (e.g., "closest AI unit to a player unit")</li>
+        <li class="ai-li">It attempts the first listed action (usually Fire or Move); if impossible, it tries the next one</li>
+        <li class="ai-li">The AI evaluates the actual board state — it fires at real targets, seeks cover, flanks when possible</li>
+        <li class="ai-li">If the AI unit's card header is blue, it does NOT make a Spent Check after acting</li>
+        <li class="ai-li">Some cards advance the Mission Marker 1, 2, or 3 spaces — triggering events or ending the firefight</li>
+      </ul>
+      <div class="rule-box blue">
+        <strong>RUMORED ENEMY (RE) COUNTERS</strong>
+        <p>Fog of war: RE counters are placed where AI units might be. As you move into range or trigger reveals, RE counters are replaced by actual AI unit counters. This creates genuine uncertainty — you don't always know exactly what or where the enemy is!</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">✋</span> Passing in Solo</h3>
+      <p>You may Pass instead of acting. When you Pass, you still flip an Order Card — the AI still gets its action. Passing removes Stress from your units but does not "end the round" by itself; the Mission Track drives the game's pacing instead of consecutive passes.</p>
+    </div>
+
+    <div class="scenario">
+      <h4>Scenario 1 — Your First Solo Turn</h4>
+      <p>Setup: Place 1 German Rifles unit (yours) facing north on the map. Place 1 Soviet Rifles unit (AI) 4 hexes ahead. Give yourself 7 CAPs.</p>
+      <div class="scenario-step"><div class="step-num">YOUR TURN</div><p>Move your German Rifles 1 hex north (Move Cost = 1AP). Place a Stress marker on the unit.</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">FLIP ORDER CARD</div><p>Look at the AP Spent Number at the bottom. If it's 2 or higher (e.g., shows "3"), 1 &lt; 3 → unit stays Fresh! If it shows "1", then 1 ≥ 1 → unit becomes Spent.</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">AI REACTS</div><p>Read the card body. If the top priority says "Fire on closest player unit" — the Soviet Rifles check if the German unit is in their Fire Zone. If yes, they attack. Work through the combat rules from that point.</p></div>
+      <div class="scenario-step"><div class="step-num">LESSON</div><p>Notice how one card does two things: checked your fate AND drove the AI. This is the core rhythm of solo play. After a few turns it becomes intuitive.</p></div>
+    </div>
+
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-prev" onclick="goTo(0)">← Overview</button>
+    <span class="module-counter">2 / 10</span>
+    <button class="btn btn-next" onclick="goTo(2)">Next: Order Cards & Spent →</button>
+  </div>
+</div>
+
+<!-- ===== MODULE 3: ORDER CARDS & SPENT IN DEPTH ===== -->
+<div class="module" id="mod-2">
+  <div class="module-header">
+    <div class="module-num">03</div>
+    <div class="module-title-block">
+      <h2>Order Cards & Spent Check (Deep Dive)</h2>
+      <p>Understanding probability, Stress, CAP spending, and how to read AI priorities</p>
+    </div>
+  </div>
+  <div class="module-body">
+
+    <div class="section-block">
+      <h3><span class="icon">📊</span> Action Cost vs. AP Spent Number</h3>
+      <p>The AP Spent Number on Order Cards replaces the d10 die roll from the 2-player rules. The principle is the same: higher-cost actions are riskier. The card deck is calibrated so that on average, units become Spent at roughly the same rate as in the 2-player game.</p>
+
+      <table class="cap-table">
+        <tr><th>Your Action Cost</th><th>Becomes Spent when card shows AP# of…</th><th>Approx. Risk</th></tr>
+        <tr><td>1AP (Move)</td><td>1 or lower</td><td>Low risk</td></tr>
+        <tr><td>2AP (MG Attack)</td><td>2 or lower</td><td>Moderate</td></tr>
+        <tr><td>3AP (Rifles Attack)</td><td>3 or lower</td><td>~50/50</td></tr>
+        <tr><td>4AP (Soviet Attack)</td><td>4 or lower</td><td>Higher risk</td></tr>
+        <tr><td>5AP (Rally)</td><td>5 or lower</td><td>Very likely Spent</td></tr>
+      </table>
+
+      <div class="ai-box">
+        <strong>SPENDING CAPs TO REDUCE ACTION COST (SOLO RULE)</strong>
+        <p>Before acting, you may spend any number of CAPs to reduce your Action Cost by 1 per CAP. This lowers the chance of becoming Spent, exactly as in the 2-player game. A 3AP attack reduced to 1AP with 2 CAPs only becomes Spent if the card shows AP# 1 or lower — much safer!</p>
+        <p>Reducing cost to 0AP: no Spent Check occurs at all. Even a Spent unit can act at 0AP!</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">⚠️</span> Stress</h3>
+      <p>Stress works the same as in the 2-player game: when a unit takes an action, place a Stress marker on it. Its next action costs <strong>+1AP</strong> extra (which also raises its Spent risk).</p>
+      <div class="rule-box red">
+        <strong>STRESS = +1AP TO ACTION COST</strong>
+        <p>A unit that moves (1AP) and is Stressed will cost 2AP to act again. That means it becomes Spent if the Order Card shows AP# 2 or lower — significantly worse odds. Alternate between units to manage Stress.</p>
+      </div>
+      <p>Stress markers are removed when you Pass (and the AI still acts via Order Card) or at the start of the next firefight phase (consult your solo scenario for timing).</p>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🤖</span> Reading AI Priority Lists</h3>
+      <p>The body of each Order Card is a priority list. Work from top to bottom and execute the <strong>first possible action</strong>:</p>
+      <ul class="checklist">
+        <li class="ai-li"><strong>FIRE orders:</strong> AI selects the specified unit (e.g., "AI unit closest to a player unit") and attacks if the target is in its Fire Zone. Uses the same combat rules as your attacks.</li>
+        <li class="ai-li"><strong>MOVE orders:</strong> AI moves the specified unit toward a target (e.g., "towards Cover", "towards a player Unit"). It always takes the most efficient legal path.</li>
+        <li class="ai-li"><strong>PASS:</strong> If no listed action is possible, the AI Passes for this activation.</li>
+        <li class="ai-li"><strong>Risk levels:</strong> Some cards specify "Low Risk", "Medium Risk" or "High Risk" — this affects whether the AI will move into exposed positions or take aggressive close-combat actions.</li>
+      </ul>
+      <div class="rule-box blue">
+        <strong>BLUE-HEADER ORDER CARDS</strong>
+        <p>When an Order Card has a blue header and is used to activate an AI unit, that AI unit does NOT make a Spent Check. It stays Fresh regardless of what action it took. These cards make the AI especially potent — multiple AI units can stay active longer.</p>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <h4>Scenario 2 — Stress & CAP Practice</h4>
+      <p>Setup: Your German MG34 (2AP attack) faces Soviet Rifles 2 hexes north. You have 4 CAPs. MG34 already has a Stress marker from last turn.</p>
+      <div class="scenario-step"><div class="step-num">STRESSED ACTION</div><p>MG34 wants to attack: 2AP base + 1AP Stress = 3AP total Action Cost.</p></div>
+      <div class="scenario-step"><div class="step-num">USE CAPs</div><p>Spend 1 CAP to reduce to 2AP. Now the MG34 only becomes Spent if the Order Card shows AP# 2 or lower.</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">FLIP ORDER CARD</div><p>Say the card shows AP# 4. Your 2AP action cost &lt; 4 → MG34 stays Fresh! Then resolve the AI's action from the card body.</p></div>
+      <div class="scenario-step"><div class="step-num">EXPERIMENT</div><p>Now try NOT spending the CAP (3AP cost vs. the same AP# 4 card). 3 &lt; 4 → still Fresh! Sometimes CAPs aren't needed. Save them for when it really matters.</p></div>
+    </div>
+
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-prev" onclick="goTo(1)">← Solo Game Flow</button>
+    <span class="module-counter">3 / 10</span>
+    <button class="btn btn-next" onclick="goTo(3)">Next: Movement →</button>
+  </div>
+</div>
+
+<!-- ===== MODULE 4: MOVEMENT ===== -->
+<div class="module" id="mod-3">
+  <div class="module-header">
+    <div class="module-num">04</div>
+    <div class="module-title-block">
+      <h2>Movement & the Map</h2>
+      <p>How your units move, facing, terrain costs, and controlling objectives</p>
+    </div>
+  </div>
+  <div class="module-body">
+
+    <div class="section-block">
+      <h3><span class="icon">🧭</span> Facing — The Green Bar</h3>
+      <p>Every unit has a <strong>green bar</strong> on one side — that's where it's "looking." A unit must face one of the six sides of its hex. Facing determines your Arc of Fire (where you can shoot) and whether attacks against you use your stronger Front Defense or weaker Flank Defense.</p>
+      <div class="two-col">
+        <div class="rule-box blue">
+          <strong>FRONT HEXES (3 hexes)</strong>
+          <p>The hex directly ahead + the two front-diagonal hexes. These are in your Arc of Fire — where you can shoot.</p>
+        </div>
+        <div class="rule-box red">
+          <strong>FLANK HEXES (3 hexes)</strong>
+          <p>The hex behind you + two rear-diagonal hexes. The AI will try to flank you — attacks from here use your lower Flank Defense!</p>
+        </div>
+      </div>
+      <div class="ai-box">
+        <strong>THE AI FLANKS — WATCH YOUR FACING</strong>
+        <p>Certain Order Cards instruct the AI to "Move to Flank" a player unit before firing. This is why positioning and facing are critical in solo play. Always check whether your units' Flank hexes are exposed to AI units that might be activated next.</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">👟</span> Foot Unit Movement</h3>
+      <p>On a Move Action, a Foot Unit moves from its current hex to any adjacent hex (1 hex). After moving, it may freely pivot to face any direction — at no extra cost. It cannot pivot before moving, only after. Pivoting in Place (no movement) also costs 1AP.</p>
+      <div class="rule-box red">
+        <strong>BACKWARDS MOVE: +1AP PENALTY</strong>
+        <p>Moving into one of your own Flank hexes costs +1AP extra. This penalty stacks with terrain and Stress penalties.</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🌲</span> Terrain Types & Move Costs</h3>
+      <div class="terrain-grid">
+        <div class="terrain-item"><span class="t-name">Open Ground</span><span class="t-mod">+0AP Move</span></div>
+        <div class="terrain-item"><span class="t-name">Light Woods</span><span class="t-mod">+1AP Move</span></div>
+        <div class="terrain-item"><span class="t-name">Heavy Woods</span><span class="t-mod">+2AP Move</span></div>
+        <div class="terrain-item"><span class="t-name">Wood Building</span><span class="t-mod">+1AP Move</span></div>
+        <div class="terrain-item"><span class="t-name">Stone Building</span><span class="t-mod">+2AP Move</span></div>
+        <div class="terrain-item"><span class="t-name">Plowed Field</span><span class="t-mod red">Wheeled: impassable</span></div>
+        <div class="terrain-item"><span class="t-name">Water</span><span class="t-mod red">Foot only, no attack</span></div>
+        <div class="terrain-item"><span class="t-name">Road (bonus)</span><span class="t-mod">Vehicles ignore terrain</span></div>
+      </div>
+      <p style="margin-top:0.5rem; font-size:0.82rem; color:#666;">The terrain type is determined by what's under the <strong>center dot</strong> of the hex — other images are decorative.</p>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🏁</span> Control Markers (Objectives)</h3>
+      <p>Control Markers flip to your side when: (1) the current controlling side has no units in the hex, AND (2) a unit with positive Firepower moves into it. In solo mode, the AI also tries to contest objectives — watch the Order Cards for "Move Towards Objective" instructions.</p>
+    </div>
+
+    <div class="scenario">
+      <h4>Scenario 3 — Navigate the Terrain Solo</h4>
+      <p>Setup: Your German Rifles unit at the south edge of Map 1. A Soviet RE counter (Rumored Enemy) is placed 5 hexes north in Light Woods. A Control Marker (Soviet side up) is in Light Woods 3 hexes north. You have 7 CAPs.</p>
+      <div class="scenario-step"><div class="step-num">YOUR TURN 1</div><p>Move into an Open hex: 1AP. Flip Order Card → resolve Spent Check → resolve AI action (probably the RE "enemy" patrols or moves).</p></div>
+      <div class="scenario-step"><div class="step-num">YOUR TURN 2</div><p>Move into the Light Woods Control Marker hex: 1AP base + 1AP Difficult Terrain + 1AP Stress = 3AP. Flip Order Card — will you be Spent?</p></div>
+      <div class="scenario-step"><div class="step-num">CONTROL</div><p>You're now in the objective hex. Flip Control Marker to German side — score a VP at mission end!</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">AI REVEAL</div><p>If the Order Card's AI action says "Fire" and the RE counter is now in range, the RE counter is replaced by the actual AI unit and it fires on you. This is how hidden AI units are revealed in solo play!</p></div>
+    </div>
+
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-prev" onclick="goTo(2)">← Order Cards & Spent</button>
+    <span class="module-counter">4 / 10</span>
+    <button class="btn btn-next" onclick="goTo(4)">Next: Fire Zone →</button>
+  </div>
+</div>
+
+<!-- ===== MODULE 5: FIRE ZONE ===== -->
+<div class="module" id="mod-4">
+  <div class="module-header">
+    <div class="module-num">05</div>
+    <div class="module-title-block">
+      <h2>The Fire Zone</h2>
+      <p>Arc of Fire, Line of Sight, and Range — three checks before every attack</p>
+    </div>
+  </div>
+  <div class="module-body">
+
+    <div class="section-block">
+      <h3><span class="icon">🎯</span> Can I Attack That Hex? Three Conditions</h3>
+      <div class="rule-box gold">
+        <strong>THE FIRE ZONE CHECKLIST (applies to YOU and the AI)</strong>
+        <p>✅ 1. Target is within your <strong>Arc of Fire</strong> (your 3 front hexes extended across the map)<br>
+        ✅ 2. Target is within your <strong>Line of Sight</strong> (no blocking terrain between you)<br>
+        ✅ 3. Target is within <strong>twice your Range</strong> (beyond Range = −2AR Long Range Penalty)</p>
+      </div>
+      <p>The AI uses these exact same rules. If you're out of an AI unit's Arc of Fire, it will be instructed to pivot or move before firing. Pay attention!</p>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🔭</span> Arc of Fire</h3>
+      <p>Take the 3 Front hexes of a unit and extend them radially across the whole map like a cone. The 3 Flank hexes are NOT in the Arc of Fire — no unit can fire behind itself without pivoting first.</p>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">👁️</span> Line of Sight (LOS)</h3>
+      <p>Draw a line from the center of your hex to the center of the target hex. If this line crosses any of the following terrain hexes, LOS is blocked:</p>
+      <ul class="checklist">
+        <li>Light or Heavy Woods</li>
+        <li>Wood or Stone Buildings</li>
+      </ul>
+      <div class="rule-box blue">
+        <strong>KEY LOS RULES</strong>
+        <p>• All units (yours AND AI) do NOT block LOS — only terrain does.<br>
+        • A unit CAN shoot at an enemy in a woods/building hex — only what's BETWEEN them matters.<br>
+        • LOS is reversible: if you can see the AI, it can see you.<br>
+        • Terrain type is determined by the hex's center dot only.</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">📏</span> Range & Range Modifiers</h3>
+      <p>Range is printed in yellow at the bottom center of the counter. Count hexes from attacker to target (not counting attacker's hex, but counting target's hex).</p>
+      <div class="terrain-grid">
+        <div class="terrain-item"><span class="t-name">Normal Range</span><span class="t-mod">+0 AR</span></div>
+        <div class="terrain-item"><span class="t-name">Long Range (>Range, ≤2×Range)</span><span class="t-mod red">−2AR</span></div>
+        <div class="terrain-item"><span class="t-name">Short Range (adjacent hex)</span><span class="t-mod">+3AR</span></div>
+        <div class="terrain-item"><span class="t-name">Close Combat (same hex)</span><span class="t-mod">+4AR</span></div>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <h4>Scenario 4 — Fire Zone Check (Solo)</h4>
+      <p>Setup: Your German MG34 faces north (Range 4). Two AI units: (A) Soviet Rifles 3 hexes north, (B) Soviet Rifles 2 hexes east. Light Woods hex is 2 hexes north between you and A.</p>
+      <div class="scenario-step"><div class="step-num">CHECK SOVIET A</div><p>3 hexes north: Arc ✓ (directly ahead). LOS: is the Light Woods hex in between? If yes → BLOCKED. Cannot attack without moving to a better position!</p></div>
+      <div class="scenario-step"><div class="step-num">CHECK SOVIET B</div><p>2 hexes east: Check Arc of Fire. Facing north, your Flank hexes are to the east. NOT IN ARC → Cannot attack. Must pivot first (costs 1AP Move action).</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">NOW THE AI CHECKS</div><p>Flip an Order Card. It says "Fire on closest player unit." Soviet A must check its own Fire Zone against your MG34. If the LOS is blocked both ways, the AI will instead get a "Move" order on the next card.</p></div>
+      <div class="scenario-step"><div class="step-num">LESSON</div><p>Positioning is a two-way street in solo play — your LOS rules and the AI's LOS rules are identical. Use terrain to block AI line of sight to your units!</p></div>
+    </div>
+
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-prev" onclick="goTo(3)">← Movement</button>
+    <span class="module-counter">5 / 10</span>
+    <button class="btn btn-next" onclick="goTo(5)">Next: Combat →</button>
+  </div>
+</div>
+
+<!-- ===== MODULE 6: COMBAT ===== -->
+<div class="module" id="mod-5">
+  <div class="module-header">
+    <div class="module-num">06</div>
+    <div class="module-title-block">
+      <h2>Combat</h2>
+      <p>The DR vs AR formula — identical for you and the AI, every attack every time</p>
+    </div>
+  </div>
+  <div class="module-body">
+
+    <div class="section-block">
+      <h3><span class="icon">💥</span> The Attack Formula</h3>
+      <p>All combat — yours or the AI's — uses this same system:</p>
+      <div class="formula">
+        Hit Number = Defense Rating (DR) − Attack Rating (AR)<br>
+        <span class="eq">Roll 2d6 ≥ Hit Number → HIT! &nbsp;|&nbsp; Roll 2d6 &lt; Hit Number → Miss<br>
+        Roll 4+ above Hit Number → CRITICAL HIT (instant destroy!)</span>
+      </div>
+      <p>In solo play, you roll the 2d6 for both your attacks AND the AI's attacks. The same fair dice decide everything.</p>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🛡️</span> Defense Rating (DR)</h3>
+      <p>DR = Target's base Defense + Terrain modifier</p>
+      <div class="two-col">
+        <div class="rule-box blue">
+          <strong>BASE DEFENSE (bottom right of counter)</strong>
+          <p>Front Defense (higher) — attacked from within Arc of Fire.<br>
+          Flank Defense (lower) — attacked from outside Arc of Fire.</p>
+        </div>
+        <div class="rule-box">
+          <strong>TERRAIN DR MODIFIERS</strong>
+          <p>Light Woods: +1DR &nbsp; Heavy Woods: +2DR<br>
+          Wood Building: +1DR &nbsp; Stone Building: +2DR<br>
+          Walls: +1DR &nbsp; Water: −1DR</p>
+        </div>
+      </div>
+      <div class="rule-box red">
+        <strong>SOFT vs ARMORED TARGETS</strong>
+        <p>Red Defense = Soft Target (infantry, guns). Blue Defense = Armored (tanks). Attacker uses matching colored Firepower.</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">⚡</span> Attack Rating (AR)</h3>
+      <p>AR = Attacker's Firepower + all applicable modifiers:</p>
+      <div class="terrain-grid">
+        <div class="terrain-item"><span class="t-name">Short Range (adjacent)</span><span class="t-mod">+3AR</span></div>
+        <div class="terrain-item"><span class="t-name">Long Range (beyond Range)</span><span class="t-mod red">−2AR</span></div>
+        <div class="terrain-item"><span class="t-name">Close Combat (same hex)</span><span class="t-mod">+4AR</span></div>
+        <div class="terrain-item"><span class="t-name">High Elevation vs Low</span><span class="t-mod">+1AR attacker</span></div>
+        <div class="terrain-item"><span class="t-name">Low vs High Elevation</span><span class="t-mod">+1DR defender</span></div>
+        <div class="terrain-item"><span class="t-name">Flank Attack</span><span class="t-mod">Use Flank Defense!</span></div>
+      </div>
+      <div class="ai-box">
+        <strong>YOU ROLL FOR AI ATTACKS TOO</strong>
+        <p>When an Order Card directs an AI unit to fire, you calculate its Hit Number (same formula), then roll 2d6. If the result ≥ Hit Number, your unit is hit. Draw a Hit Marker from the pile and place it face-down under your unit. The AI doesn't "know" what the hit marker does — it doesn't change strategy based on it. Only you can look at it!</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">📊</span> Worked Example (Solo)</h3>
+      <p>Your German MG34 (4 Red FP, Range 4) attacks a Soviet Rifles AI unit in Light Woods, at normal range, from the front:</p>
+      <div class="formula">
+        DR: 12 Front Def + 1 Light Woods = <strong>13DR</strong><br>
+        AR: 4 FP + 0 Range = <strong>4AR</strong><br>
+        Hit Number: 13 − 4 = <strong>9</strong> &nbsp;(need 2d6 ≥ 9)<br>
+        <span class="eq">Critical Hit if roll ≥ 13. Spend up to 2 CAPs to lower Hit Number before rolling.</span>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <h4>Scenario 5 — Your First Solo Combat</h4>
+      <p>Setup: Your German MG34 faces north. Soviet Rifles AI unit 2 hexes ahead in Open terrain. You have 5 CAPs.</p>
+      <div class="scenario-step"><div class="step-num">ATTACK ACTION</div><p>Declare attack on Soviet AI unit. Verify Fire Zone ✓. DR: 12 Front, Open: +0 = 12DR. AR: 4 FP + 3 Short Range = 7AR. Hit Number: 12−7 = <strong>5</strong>.</p></div>
+      <div class="scenario-step"><div class="step-num">SPEND CAPs?</div><p>Spend 1 CAP to lower Hit Number to 4. Now 2d6 ≥ 4 — very high chance of hitting! Roll the dice.</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">FLIP ORDER CARD</div><p>AP Spent Number says "3". MG34's Attack Cost is 2AP (you spent 1 CAP). 2 &lt; 3 → MG34 stays Fresh. Then read the AI action — maybe the Soviets now try to return fire or move to cover.</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">AI FIRES BACK (if ordered)</div><p>If the Order Card directs the AI Rifles to fire at your MG34: DR (MG34 in Open) = 10 Front. AR: 3 FP + 3 Short Range = 6AR. Hit Number: 10−6 = 4. You roll for the AI — same 2d6.</p></div>
+    </div>
+
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-prev" onclick="goTo(4)">← Fire Zone</button>
+    <span class="module-counter">6 / 10</span>
+    <button class="btn btn-next" onclick="goTo(6)">Next: Hits & Rally →</button>
+  </div>
+</div>
+
+<!-- ===== MODULE 7: HITS & RALLY ===== -->
+<div class="module" id="mod-6">
+  <div class="module-header">
+    <div class="module-num">07</div>
+    <div class="module-title-block">
+      <h2>Hits & Rallying</h2>
+      <p>Secret Hit Markers for both sides — and how to recover your battered units</p>
+    </div>
+  </div>
+  <div class="module-body">
+
+    <div class="section-block">
+      <h3><span class="icon">💀</span> The Hit System</h3>
+      <p>When any attack succeeds, the target draws a <strong>Hit Marker face-down</strong> from the appropriate pile and slides it under the unit. In solo, this works the same for your units and for AI units — both sides have hidden hit states.</p>
+      <div class="rule-box red">
+        <strong>SECOND HIT = DESTROYED</strong>
+        <p>If a unit with a Hit Marker is hit again, it's immediately destroyed — removed from the map and placed on the CAPs Track (permanently reducing your future CAP allocation per destroyed unit).</p>
+      </div>
+      <div class="ai-box">
+        <strong>AI HIT MARKERS — SOLO RULE</strong>
+        <p>When your attack hits an AI unit, that AI unit also draws a face-down Hit Marker. In solo play, you do NOT look at the AI's Hit Marker (it's genuinely hidden information). The Hit Marker's effect on the AI's stats is only revealed when that stat is used in combat — just as in the 2-player game. This preserves genuine fog of war even when you're the only human at the table!</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🃏</span> Soft Target Hit Markers</h3>
+      <div class="hit-grid">
+        <div class="hit-card"><div class="hit-name">Stunned</div><div class="hit-effect">Cannot act at all (except Rally)</div><div class="rally-num">Rally #: 7 (×2)</div></div>
+        <div class="hit-card"><div class="hit-name">Unnerved</div><div class="hit-effect">No stat changes! (Still must rally)</div><div class="rally-num">Rally #: 7 (×2)</div></div>
+        <div class="hit-card"><div class="hit-name">Pinned</div><div class="hit-effect">Cannot Move or Pivot</div><div class="rally-num">Rally #: 7 (×5)</div></div>
+        <div class="hit-card"><div class="hit-name">Suppressed</div><div class="hit-effect">Attack Cost +1AP; FP −2</div><div class="rally-num">Rally #: 7 (×5)</div></div>
+        <div class="hit-card"><div class="hit-name">Panicked</div><div class="hit-effect">Cannot Attack; Front Def −2; Flank +1</div><div class="rally-num">Rally #: 8 (×2)</div></div>
+        <div class="hit-card"><div class="hit-name">Cowering</div><div class="hit-effect">Atk +2AP; Move +1AP; Range→1; Def +1</div><div class="rally-num">Rally #: 8 (×2)</div></div>
+        <div class="hit-card"><div class="hit-name">Berserk</div><div class="hit-effect">Combat bonus — forced to advance (see rules)</div><div class="rally-num">Special (×1)</div></div>
+        <div class="hit-card"><div class="hit-name">Destroyed</div><div class="hit-effect">Reveal when fired at again or at round end</div><div class="rally-num">No Rally (×1)</div></div>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🩹</span> Rallying Your Units</h3>
+      <p>A Hit unit may attempt a <strong>Rally Action</strong> to remove its Hit Marker. Costs <strong>5AP</strong> (plus Stress if applicable).</p>
+      <div class="formula">
+        Roll 2d6 ≥ Rally Number (on Hit Marker) → Hit Marker removed!
+      </div>
+      <p>Lower the Rally Number by (cumulative):</p>
+      <ul class="checklist">
+        <li>Light/Heavy Woods, Wood/Stone Buildings, Walls: −1 each</li>
+        <li>Heavy Smoke in any terrain: −1</li>
+        <li>Each friendly un-hit unit in same hex: −1 per unit</li>
+        <li>Spending CAPs (up to 2): −1 per CAP</li>
+      </ul>
+      <div class="ai-box">
+        <strong>AI RALLY — SOLO RULE</strong>
+        <p>The AI does not rally on its own initiative. AI units can only rally if an Order Card specifically directs a Rally action. This is intentional — it means you can exploit hit AI units before they recover if you act quickly enough!</p>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <h4>Scenario 6 — Hit & Rally in Solo</h4>
+      <p>Your Soviet Rifles (you play Soviet side this time) have been hit — Suppressed marker face-down. You have 6 CAPs. The German AI Rifles are 3 hexes away.</p>
+      <div class="scenario-step"><div class="step-num">AI FIRES AGAIN</div><p>Flip Order Card — AI is directed to fire. The Suppressed Hit Marker is now revealed (affects Firepower −2). Calculate the AI's attack. If Hit Number is met, your unit is destroyed!</div></div>
+      <div class="scenario-step"><div class="step-num">YOUR RALLY ATTEMPT</div><p>Use your turn to rally instead: 5AP cost. Suppressed Rally # = 7. In Light Woods: −1. Spend 1 CAP: −1 more. Need 2d6 ≥ 5. Flip Order Card (for Spent Check). If you roll ≥ 5 → Suppressed removed!</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">AFTER YOUR RALLY</div><p>Flip Order Card to check Spent (5AP Rally vs AP# on card). Then the AI acts — it might try to advance or fire at a different unit while your Rifles recover.</p></div>
+      <div class="scenario-step"><div class="step-num">LESSON</div><p>In solo, Hit units are vulnerable. The AI doesn't wait for you to recover — it will try to press the advantage with the next card. Rally quickly or use CAPs to reduce rally cost!</p></div>
+    </div>
+
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-prev" onclick="goTo(5)">← Combat</button>
+    <span class="module-counter">7 / 10</span>
+    <button class="btn btn-next" onclick="goTo(7)">Next: CAPs (Solo) →</button>
+  </div>
+</div>
+
+<!-- ===== MODULE 8: CAPs ===== -->
+<div class="module" id="mod-7">
+  <div class="module-header">
+    <div class="module-num">08</div>
+    <div class="module-title-block">
+      <h2>Command Action Points (Solo)</h2>
+      <p>Your most precious resource — how to use them and why protecting them is everything</p>
+    </div>
+  </div>
+  <div class="module-body">
+
+    <div class="section-block">
+      <h3><span class="icon">⭐</span> CAPs in Solo Play</h3>
+      <p>CAPs work identically to the 2-player game — they represent your force's leadership and logistics. You receive a fixed number each mission phase (set by the scenario). The AI does NOT have CAPs; it acts based purely on Order Cards.</p>
+      <div class="rule-box gold">
+        <strong>CAPs ARE YOUR EDGE OVER THE AI</strong>
+        <p>The AI gets no CAPs — it can't modify dice rolls or reactivate Spent units. Your CAPs are your primary advantage. Use them wisely to tip key combats in your favor and keep critical units active when the AI puts pressure on you.</p>
+      </div>
+      <div class="rule-box red">
+        <strong>DESTROYED UNITS REDUCE YOUR FUTURE CAPs</strong>
+        <p>Each of your destroyed units permanently reduces your starting CAPs by 1 (never below 3). The AI feels this pain through you — every unit you lose makes future turns harder. Protect your units like they carry your command capacity, because they do.</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">💰</span> Three Ways to Spend CAPs</h3>
+      <table class="cap-table">
+        <tr><th>Use</th><th>How</th><th>Limit</th></tr>
+        <tr><td><strong>Reduce Action Cost (Spent Check)</strong></td><td>Each CAP spent reduces your Action Cost by 1 before the Order Card comparison. Makes it less likely your unit becomes Spent.</td><td>Any amount</td></tr>
+        <tr><td><strong>Activate a Spent Unit (0AP)</strong></td><td>Spend CAPs = full Action Cost to bring it to 0AP. The unit acts and no Spent Check occurs. Even Spent units can act at 0AP!</td><td>Any amount</td></tr>
+        <tr><td><strong>Modify a 2d6 Number Check</strong></td><td>Raise or lower the required Hit Number, Rally Number, or other 2d6 target by 1 per CAP, BEFORE rolling.</td><td>Max 2 CAPs per roll</td></tr>
+      </table>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🧠</span> Solo CAP Strategy</h3>
+      <ul class="checklist">
+        <li>Spend 1–2 CAPs to lower your Hit Number when attacking a key AI unit — turning a 50/50 into 80/20 is worth it</li>
+        <li>If a critical unit is Spent and the AI is about to fire on it, spend CAPs to rally it or move it out of danger</li>
+        <li>Don't burn CAPs on trivial actions — a 1AP move rarely needs CAP protection</li>
+        <li>Remember: the AI doesn't benefit from CAPs, so any CAP spend is a pure advantage for you</li>
+        <li>Events on the Mission Track can drain your CAPs — keep a reserve for emergencies</li>
+      </ul>
+    </div>
+
+    <div class="scenario">
+      <h4>Scenario 7 — The Critical CAP Decision</h4>
+      <p>Your German MG34 (2AP attack, Stressed) is facing a key AI target. You have only 3 CAPs left. The AI Soviet unit is in a Stone Building (huge defense bonus).</p>
+      <div class="scenario-step"><div class="step-num">CALCULATE HIT NUMBER</div><p>Soviet: 12 Front Def + 2 Stone Building = 14DR. MG34: 4 FP + 3 Short Range (adjacent) = 7AR. Hit Number: 14−7 = <strong>7</strong>. Plus Stress: attack cost is 2+1 = 3AP.</p></div>
+      <div class="scenario-step"><div class="step-num">OPTION A — Spend 2 CAPs on Attack</div><p>Lower Hit Number from 7 to 5. Need 2d6 ≥ 5 (83% hit chance). That uses 2 of 3 CAPs. Attack Cost = 3AP (Stressed).</p></div>
+      <div class="scenario-step"><div class="step-num">OPTION B — Spend 1 CAP on Attack + 1 on Spent</div><p>Hit Number → 6 (72% hit). AND lower Attack Cost 3AP → 2AP before Order Card comparison. Safer on both fronts, but less attack power.</p></div>
+      <div class="scenario-step"><div class="step-num">OPTION C — Save All CAPs</div><p>Take the 7 Hit Number (58% hit). Keep 3 CAPs for later. What if you'll need to rally a hit unit next turn?</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">MISSION TRACK WARNING</div><p>Remember: Mission Track events can drain your CAPs. If the next Order Card advances the Mission Marker onto a "Lose 2 CAPs" event, you might regret spending them now!</p></div>
+    </div>
+
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-prev" onclick="goTo(6)">← Hits & Rally</button>
+    <span class="module-counter">8 / 10</span>
+    <button class="btn btn-next" onclick="goTo(8)">Next: Mission Track & Cards →</button>
+  </div>
+</div>
+
+<!-- ===== MODULE 9: MISSION TRACK & CARDS ===== -->
+<div class="module" id="mod-8">
+  <div class="module-header">
+    <div class="module-num">09</div>
+    <div class="module-title-block">
+      <h2>Mission Track & Battle Cards</h2>
+      <p>How solo firefights end, Mission Track events, Victory Points, and your Battle Cards</p>
+    </div>
+  </div>
+  <div class="module-body">
+
+    <div class="section-block">
+      <h3><span class="icon">⏱️</span> The Mission Track — How Firefights End</h3>
+      <p>In solo mode, there are <strong>no fixed Rounds</strong>. Instead, each firefight has a Mission Track — a series of spaces, some with events. When certain Order Cards are resolved, the Mission Marker advances 1, 2, or 3 spaces along the track.</p>
+      <div class="ai-box">
+        <strong>MISSION TRACK REPLACES ROUNDS</strong>
+        <p>• The firefight ends <strong>immediately</strong> when the Mission Marker lands on or passes the last space of the Mission Track.<br>
+        • Along the way, if the Marker lands on an Event space, resolve that event immediately.<br>
+        • Events can include: losing CAPs, an AI unit activating as a bonus, Rumored Enemy appearing, or other scenario-specific effects.<br>
+        • Because card draws are random, the length of each firefight varies — this creates genuine replayability and tension!</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🏆</span> Victory Points (Solo)</h3>
+      <p>VPs are tracked on your Solo Track Sheet. You earn VPs by:</p>
+      <ul class="checklist">
+        <li>Destroying AI units</li>
+        <li>Controlling objective hexes (Control Markers) when scored</li>
+        <li>Achieving specific mission objectives listed in the solo scenario</li>
+      </ul>
+      <p>The scenario specifies what score you need for a win, partial victory, or loss. Unlike the 2-player game's "VP Advantage" track, solo scoring is simpler — you hit a target or you don't.</p>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🃏</span> Battle Cards (Your Solo Tactical Edge)</h3>
+      <p>You have access to the same Battle Cards as in the 2-player game. Each Mission specifies which numbered Battle Cards make up your hand. You start with Card #01 (Adrenaline) plus draw additional cards as specified.</p>
+      <div class="rule-box blue">
+        <strong>THE AI HAS NO BATTLE CARDS</strong>
+        <p>Battle Cards are exclusively your tool. The AI operates entirely through Order Cards. This is a significant asymmetric advantage — use your cards aggressively to create the decisive moments the Order Cards won't give the AI.</p>
+      </div>
+      <table class="cap-table" style="margin-top:0.8rem">
+        <tr><th>#</th><th>Card</th><th>Best Solo Use</th></tr>
+        <tr><td>01</td><td>Adrenaline</td><td>Reactivate a Spent unit for free — use when a key unit spent at a bad moment</td></tr>
+        <tr><td>02</td><td>Command Action</td><td>Any unit (even Spent) takes any action at 0AP — your most flexible card</td></tr>
+        <tr><td>06</td><td>Battlefield Confusion</td><td>Add 3AP to an AI unit's action cost — increases its Spent risk</td></tr>
+        <tr><td>07</td><td>Veteran NCO</td><td>Re-roll any one die — save for a critical attack or rally roll</td></tr>
+        <tr><td>08</td><td>Frontline Officer</td><td>Roll 1d6 extra CAPs — great when a Mission Track event drained you</td></tr>
+        <tr><td>10</td><td>Sniper Fire</td><td>N/A (AI has no CAPs) — skip this card in solo or check solo scenario rules</td></tr>
+      </table>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🔄</span> Phase Reset (Between Firefight Phases)</h3>
+      <p>Solo scenarios may divide play into phases rather than rounds. At the end of a phase (when the Mission Track triggers a phase change), typically:</p>
+      <div class="summary-bar">
+        <div class="sb-title">PHASE RESET (check your solo scenario for exact sequence)</div>
+        Flip all Spent units → Fresh &nbsp;|&nbsp; Reset CAPs (−1 per destroyed unit) &nbsp;|&nbsp; Draw Battle Cards<br>
+        Resolve any phase-start events &nbsp;|&nbsp; Check reinforcement schedule &nbsp;|&nbsp; Continue Mission Track
+      </div>
+    </div>
+
+    <div class="scenario">
+      <h4>Scenario 8 — Play Your First Solo Firefight!</h4>
+      <p>You're now ready to tackle Solo Mission 1. Here's how to approach it:</p>
+      <div class="scenario-step"><div class="step-num">SETUP</div><p>Follow the solo scenario's setup exactly — place your units, AI units (or RE counters), Control Markers, and the Mission Track. Note your starting CAPs and Battle Cards.</p></div>
+      <div class="scenario-step"><div class="step-num">RHYTHM</div><p>Your action → flip Order Card → Spent Check → AI action → check Mission Marker. Repeat. After 3–4 turns this becomes automatic.</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">AI CONFUSION?</div><p>If an Order Card's instructions seem ambiguous (e.g., "closest AI to a Unit" when there are ties), always resolve in the way that is hardest for you. The AI is meant to be a challenging opponent.</p></div>
+      <div class="scenario-step"><div class="step-num">AFTER THE FIREFIGHT</div><p>Reflect: Did you manage CAPs well? Did you use Battle Cards at the right moments? Did terrain save you or hurt you? Solo play rewards replaying the same scenario multiple times to improve your score!</p></div>
+    </div>
+
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-prev" onclick="goTo(7)">← CAPs</button>
+    <span class="module-counter">9 / 10</span>
+    <button class="btn btn-next" onclick="goTo(9)">Next: Advanced Rules →</button>
+  </div>
+</div>
+
+<!-- ===== MODULE 10: ADVANCED ===== -->
+<div class="module" id="mod-9">
+  <div class="module-header">
+    <div class="module-num">10</div>
+    <div class="module-title-block">
+      <h2>Advanced Rules Overview</h2>
+      <p>Hills, mortars, vehicles, fortifications — and how the Athena AI handles them all</p>
+    </div>
+  </div>
+  <div class="module-body">
+
+    <div class="section-block">
+      <h3><span class="icon">🕵️</span> Rumored Enemy — The Fog of War System</h3>
+      <p>RE counters are placed on the map at setup (and sometimes added via Mission Track events) to represent possible AI unit positions you haven't confirmed. You see the counters but don't know if they're real until revealed.</p>
+      <div class="ai-box">
+        <strong>HOW RE COUNTERS WORK</strong>
+        <p>• RE counters on the map represent <em>suspected</em> AI positions — they may or may not be actual units.<br>
+        • When an Order Card activates an AI unit and you check whether an RE counter is real, follow the solo scenario's reveal rules.<br>
+        • When a real AI unit is revealed, replace the RE counter with the actual unit counter facing toward you.<br>
+        • Your combat against unrevealed positions is resolved as "Recon by Fire" — you might reveal a hidden unit AND attack it in one roll.</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">⛰️</span> Hills & Elevation</h3>
+      <div class="rule-box">
+        <strong>ELEVATION BASICS</strong>
+        <p>Hexes can be Level 0 (ground), Level 1 Hill, or Level 2 Hill. Moving uphill costs foot units +1AP per level. The AI follows these exact same rules — Order Cards directing the AI to move uphill cost more and risk spending the AI unit (the AI has no CAPs to mitigate this, which is a genuine advantage for you on hilly maps!). High ground gives +1AR to attacker, +1DR to defender.</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">💣</span> Mortars & Artillery</h3>
+      <p>Mortars can fire directly (line-of-sight) or <strong>indirectly</strong> over obstacles using a Spotter Hex. Artillery cards give Off-Board Artillery — planned one phase, fired in the next, subject to drift. The AI also uses mortar and artillery units — Order Cards will direct them to fire. Remember:</p>
+      <div class="rule-box gold">
+        <strong>HE (HIGH EXPLOSIVE) ALWAYS HITS FLANK DEFENSE</strong>
+        <p>Mortar and artillery attacks always resolve against the target's Flank Defense — even if attacking from the front. In Heavy Woods, soft targets get no +2DR woods bonus (air burst). This makes HE weapons devastatingly effective against entrenched infantry on both sides.</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🚗</span> Vehicles</h3>
+      <p>Vehicles have Bonus Moves — extra hexes per Move action. Key solo vehicle notes:</p>
+      <ul class="checklist">
+        <li><strong>Tracked</strong> (blue Move Cost): Bonus Moves on roads and Open terrain</li>
+        <li><strong>Wheeled</strong> (green Move Cost): Bonus Moves on Roads only</li>
+        <li><strong>Turreted</strong>: fire 360° at +2AP cost outside Arc of Fire</li>
+        <li class="ai-li">The AI vehicle will follow Order Card movement instructions exactly — if told to "Move Towards Cover", it picks the nearest cover regardless of movement cost</li>
+        <li class="ai-li">AI vehicles do NOT receive Terrain defensive bonuses in Close Combat — exploit this when using your infantry against enemy tanks!</li>
+        <li>Armored Hit Markers include Immobilized, Gun Damaged, Suppressed, Destroyed — some cannot be Rallied (physical damage)</li>
+      </ul>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🏰</span> Fortifications & Obstacles</h3>
+      <div class="two-col">
+        <div class="rule-box blue">
+          <strong>BUNKERS (+5DR front, +3DR flank)</strong>
+          <p>Extremely tough to assault. If the AI occupies a bunker, it becomes very hard to dislodge — plan your attacks with HE mortars or flamethrowers.</p>
+        </div>
+        <div class="rule-box">
+          <strong>TRENCHES (omnidirectional DR)</strong>
+          <p>Protection from any direction. Both your units and AI units benefit. In solo scenarios, AI units often start in trenches — you must bring enough firepower to overcome the defense bonus.</p>
+        </div>
+      </div>
+      <div class="rule-box red">
+        <strong>MINES & BARBED WIRE</strong>
+        <p>In solo scenarios, mines can be placed by either side (check scenario rules). When your unit triggers a mine, you roll against the mine's Hit Number — it's an automatic attack with no AR, just a Hit Number. Pioneers can enter mine hexes safely. Tracked vehicles destroy wire by driving through it.</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🔥</span> Flamethrowers</h3>
+      <p>Pioneers and certain tanks have flamethrowers. Always 3 Red + 3 Blue FP, max Range 1. Always attacks Flank Defense, ignores ALL terrain DR bonuses (except Smoke). In solo mode, flamethrowers are your best tool for clearing bunkers and buildings that the AI is using for cover — the AI's terrain bonus advantage disappears completely.</p>
+    </div>
+
+    <div class="section-block">
+      <h3><span class="icon">🗺️</span> Solo Campaign Structure</h3>
+      <p>The Eastern Front Solo Expansion includes two full campaigns:</p>
+      <div class="rule-box gold">
+        <strong>CAMPAIGN 1 — GERMAN 10TH PANZER DIVISION</strong>
+        <p>You command elements of the 10th Panzer Division during the 1941 advance on Moscow. Build your forces across multiple linked firefights — your surviving units carry over, with persistent hit markers and reduced CAPs from cumulative losses.</p>
+      </div>
+      <div class="rule-box blue">
+        <strong>CAMPAIGN 2 — SOVIET 32ND ARMY</strong>
+        <p>Switch sides! Command Soviet forces trying to undo the German gains from Campaign 1. You're playing against the same maps but from the other direction — a completely fresh strategic challenge.</p>
+      </div>
+      <p>Between campaigns, you can also generate standalone firefights using the <em>Firefight Generator</em> (sold separately), which integrates with the Solo Expansion to create custom scenarios with unique solo command cards.</p>
+    </div>
+
+    <div class="scenario">
+      <h4>Your Solo Learning Path</h4>
+      <div class="scenario-step"><div class="step-num">SOLO FIREFIGHTS 1–2</div><p>Core rules only: moving, attacking, rallying, CAPs, Order Cards, Mission Track. Master the card-flip rhythm before adding complexity.</p></div>
+      <div class="scenario-step ai-step"><div class="step-num">AI MASTERY TIP</div><p>When the Order Card instructions feel unclear, always resolve them in the way that creates the hardest opponent for you. The Athena AI is designed to be challenging — don't give it the benefit of generous interpretations.</p></div>
+      <div class="scenario-step"><div class="step-num">SOLO FIREFIGHTS 3–4</div><p>Add Hills, Elevation, and Mortars. Elevation changes how you think about positioning on both sides of the board.</p></div>
+      <div class="scenario-step"><div class="step-num">SOLO FIREFIGHTS 5–6</div><p>Full vehicle rules — tanks, transport, armored combat. The AI handles vehicles well via Order Cards.</p></div>
+      <div class="scenario-step"><div class="step-num">CAMPAIGNS</div><p>Once comfortable with individual firefights, start Campaign 1. Persistent losses across missions create long-term strategic pressure that single firefights don't capture.</p></div>
+    </div>
+
+    <div class="rule-box gold">
+      <strong>🏅 SOLO COMMANDER'S CREED</strong>
+      <p>The Athena AI has no CAPs — you do. The AI has no Battle Cards — you do. But the AI is relentless, doesn't panic, and follows optimal Order Card logic every single turn. Your edge is flexibility, resource management, and creativity. Use CAPs at decisive moments. Play Battle Cards aggressively. And always, always respect the terrain — it's your best weapon against an enemy that never gets tired.</p>
+    </div>
+
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-prev" onclick="goTo(8)">← Mission Track & Cards</button>
+    <span class="module-counter">10 / 10</span>
+    <button class="btn btn-next" onclick="goTo(0)" style="background:var(--olive);border-color:var(--olive);color:white;">↩ Back to Start</button>
+  </div>
+</div>
+
+</div><!-- end .container -->
+
+<script>
+  let current = 0;
+  const total = 10;
+  function goTo(n) {
+    document.getElementById('mod-' + current).classList.remove('active');
+    document.querySelectorAll('.prog-dot')[current].classList.remove('active');
+    document.querySelectorAll('.prog-dot')[current].classList.add('done');
+    current = n;
+    document.getElementById('mod-' + current).classList.add('active');
+    document.querySelectorAll('.prog-dot').forEach((d, i) => {
+      d.classList.remove('active');
+      if (i === current) d.classList.add('active');
+    });
+    document.getElementById('prog-label').textContent = 'Module ' + (n + 1) + ' of ' + total;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
